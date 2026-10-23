@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   test:
-    name: Typecheck and test
+    name: Typecheck, Unit Tests & Browser Smoke
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -31,5 +31,23 @@ jobs:
       - name: Typecheck
         run: npm run typecheck
 
-      - name: Run automated tests
+      - name: Build
+        run: npm run build
+
+      - name: Run automated unit & protocol tests
         run: npm test
+
+      - name: Install Playwright Chromium & dependencies
+        run: npx playwright install --with-deps chromium
+
+      - name: Run browser smoke tests & screenshot capture
+        run: npm run test:smoke
+
+      - name: Upload screenshots as workflow artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-screenshots
+          path: docs/screenshots/*.png
+          retention-days: 7
+          if-no-files-found: ignore
