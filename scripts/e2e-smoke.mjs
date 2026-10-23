@@ -62,11 +62,11 @@ try {
   await guest.waitForFunction(() => {
     const text = document.querySelector("#labelParticipants")?.textContent || "";
     return /2\s+Online/i.test(text);
-  }, { timeout: 45000 });
+  }, null, { timeout: 45000 });
   await host.waitForFunction(() => {
     const text = document.querySelector("#labelParticipants")?.textContent || "";
     return /2\s+Online/i.test(text);
-  }, { timeout: 15000 });
+  }, null, { timeout: 15000 });
 
   const message = `Anomoly E2E smoke ${new Date().toISOString()}`;
   await host.locator("#messageTextInput").fill(message);
