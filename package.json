@@ -1,7 +1,7 @@
 {
   "name": "anomoly-chat",
   "version": "1.0.0",
-  "description": "Anonymous. Encrypted. Temporary. Private text conversations without accounts or contact details.",
+  "description": "Temporary, accountless peer-to-peer chat and document sharing using WebRTC.",
   "main": "index.js",
   "scripts": {
     "build": "tsc",
@@ -14,9 +14,17 @@
     "type": "git",
     "url": "git+https://github.com/skandachandrashekar335-wq/anomoly-chat.git"
   },
-  "keywords": [],
+  "keywords": [
+    "anonymous-chat",
+    "webrtc",
+    "peer-to-peer",
+    "ephemeral",
+    "document-sharing",
+    "vercel",
+    "privacy"
+  ],
   "author": "",
-  "license": "ISC",
+  "license": "Apache-2.0",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/skandachandrashekar335-wq/anomoly-chat/issues"
