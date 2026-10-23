@@ -13,6 +13,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
 
+  <!-- Client-side WebRTC and QR libraries (Static, Serverless, Zero-Database) -->
+  <script src="peerjs.min.js"></script>
+  <script src="qrcode.min.js"></script>
+
   <style>
     /* ==========================================================================
        NEUMORPHISM (SOFT UI) DESIGN SYSTEM — ANOMOLY CHAT
@@ -648,6 +652,122 @@
     }
 
     /* ==========================================================================
+       ROOM LIFETIME / EXPIRY SELECTOR (DYNAMIC LIFETIME FEATURE)
+       ========================================================================== */
+
+    .expiry-selector-wrapper {
+      margin: 1.15rem 0 1rem;
+      padding: 0.9rem 1rem;
+      border-radius: 16px;
+      background: var(--bg);
+      box-shadow: var(--neu-inset-sm);
+    }
+
+    .expiry-selector-label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.6rem;
+    }
+
+    .expiry-presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.4rem;
+    }
+
+    .expiry-pill {
+      padding: 0.45rem 0.2rem;
+      background: var(--bg);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      box-shadow: var(--neu-flat-sm);
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      user-select: none;
+    }
+
+    .expiry-pill:hover {
+      color: var(--accent);
+      transform: translateY(-2px);
+      box-shadow: var(--neu-btn-hover);
+    }
+
+    .expiry-pill:active {
+      transform: translateY(1px);
+    }
+
+    .expiry-pill.active {
+      background: var(--bg);
+      box-shadow: var(--neu-inset);
+      color: var(--accent);
+      font-weight: 700;
+      border-color: rgba(108, 99, 255, 0.3);
+    }
+
+    .custom-expiry-container {
+      margin-top: 0.65rem;
+      padding-top: 0.65rem;
+      border-top: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .custom-expiry-input {
+      width: 75px;
+      height: 38px;
+      background: var(--bg);
+      border: 1.5px solid transparent;
+      border-radius: 10px;
+      box-shadow: var(--neu-inset);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      text-align: center;
+      padding: 0 0.5rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .custom-expiry-input:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+
+    .selected-lifetime-indicator {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      margin-top: 0.55rem;
+      line-height: 1.4;
+    }
+
+    /* Accessibility focus and reduced motion */
+    :focus-visible {
+      outline: 2.5px solid var(--accent);
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* ==========================================================================
        FEATURES SECTION
        ========================================================================== */
 
@@ -1000,56 +1120,60 @@
     }
 
     .chat-container {
-      max-width: 960px;
+      max-width: 1040px;
       width: 100%;
-      margin: 1.5rem auto 2rem;
-      padding: 0 1.5rem;
-      flex-grow: 1;
+      margin: 1.25rem auto 2rem;
+      padding: 0 1.25rem;
+      flex: 1 1 auto;
       display: flex;
       flex-direction: column;
     }
 
     .chat-panel {
       background: var(--bg);
-      border-radius: 28px;
+      border-radius: 24px;
       box-shadow: var(--neu-flat);
       display: flex;
       flex-direction: column;
-      height: calc(100vh - 120px);
-      min-height: 540px;
+      height: min(700px, calc(100vh - 110px));
+      min-height: 480px;
       overflow: hidden;
+      position: relative;
     }
 
     /* Chat Panel Header */
     .chat-panel-header {
-      padding: 1.25rem 1.75rem;
+      padding: 0.85rem 1.5rem;
       border-bottom: 1px solid var(--border-subtle);
       display: flex;
       align-items: center;
       justify-content: space-between;
-      gap: 1rem;
+      gap: 0.75rem;
       flex-wrap: wrap;
-      background: rgba(224, 229, 236, 0.7);
+      background: rgba(224, 229, 236, 0.85);
+      backdrop-filter: blur(8px);
+      z-index: 10;
+      flex-shrink: 0;
     }
 
     .chat-room-info {
       display: flex;
       align-items: center;
-      gap: 0.85rem;
+      gap: 0.75rem;
     }
 
     .room-badge-btn {
       display: inline-flex;
       align-items: center;
-      gap: 0.5rem;
-      padding: 0.45rem 0.9rem;
+      gap: 0.45rem;
+      padding: 0.4rem 0.85rem;
       border-radius: 12px;
       background: var(--bg);
       box-shadow: var(--neu-btn);
       border: none;
       cursor: pointer;
       font-family: var(--font-mono);
-      font-size: 1.05rem;
+      font-size: 0.95rem;
       font-weight: 700;
       color: var(--text-primary);
       transition: all 0.15s ease;
@@ -1067,24 +1191,38 @@
     .chat-status-badges {
       display: flex;
       align-items: center;
-      gap: 0.65rem;
+      gap: 0.5rem;
+      flex-wrap: wrap;
     }
 
     .status-pill {
       display: inline-flex;
       align-items: center;
       gap: 0.4rem;
-      padding: 0.35rem 0.75rem;
+      padding: 0.35rem 0.7rem;
       border-radius: 8px;
       background: var(--bg);
       box-shadow: var(--neu-inset);
-      font-size: 0.8rem;
+      font-size: 0.78rem;
       font-weight: 600;
       color: var(--text-secondary);
+      transition: all 0.2s ease;
     }
 
     .status-pill.online {
       color: var(--success);
+    }
+
+    .status-pill.waiting {
+      color: #D97706;
+    }
+
+    .status-pill.connecting {
+      color: var(--accent);
+    }
+
+    .status-pill.disconnected {
+      color: var(--error);
     }
 
     .status-pill.timer {
@@ -1095,60 +1233,97 @@
     .chat-header-actions {
       display: flex;
       align-items: center;
-      gap: 0.75rem;
+      gap: 0.6rem;
     }
 
-    /* Messages Display Area */
+    /* Live P2P Status Notification Banner */
+    .chat-status-banner {
+      padding: 0.6rem 1.5rem;
+      background: rgba(108, 99, 255, 0.08);
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      flex-shrink: 0;
+      transition: all 0.3s ease;
+    }
+
+    .chat-status-banner.warning {
+      background: rgba(217, 119, 6, 0.12);
+      color: #92400E;
+    }
+
+    .chat-status-banner.connected {
+      background: rgba(56, 178, 172, 0.12);
+      color: #234E52;
+    }
+
+    .chat-status-banner.error {
+      background: rgba(229, 62, 62, 0.12);
+      color: #742A2A;
+    }
+
+    /* Natural Column Messages Display Area */
     .chat-messages-area {
-      flex-grow: 1;
-      padding: 1.75rem;
+      flex: 1 1 auto;
+      padding: 1.25rem 1.5rem;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
-      gap: 1rem;
+      gap: 0.75rem;
+      justify-content: flex-start;
       scroll-behavior: smooth;
     }
 
     .chat-empty-state {
       margin: auto;
       text-align: center;
-      max-width: 400px;
-      padding: 2rem;
+      max-width: 440px;
+      padding: 1.5rem 1rem;
     }
 
     .empty-state-icon {
-      width: 64px;
-      height: 64px;
-      border-radius: 20px;
+      width: 56px;
+      height: 56px;
+      border-radius: 18px;
       background: var(--bg);
       box-shadow: var(--neu-flat-sm);
       display: flex;
       align-items: center;
       justify-content: center;
       color: var(--accent);
-      margin: 0 auto 1.25rem;
+      margin: 0 auto 1rem;
     }
 
     .chat-empty-state h3 {
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
+      font-size: 1.15rem;
+      margin-bottom: 0.4rem;
     }
 
     .chat-empty-state p {
       color: var(--text-secondary);
-      font-size: 0.9rem;
+      font-size: 0.88rem;
+      line-height: 1.5;
     }
 
     /* Message Bubbles */
     .chat-bubble {
-      max-width: 78%;
-      padding: 0.9rem 1.25rem;
-      border-radius: 20px;
+      max-width: min(80%, 540px);
+      padding: 0.75rem 1.15rem;
+      border-radius: 18px;
       font-size: 0.95rem;
-      line-height: 1.55;
+      line-height: 1.5;
       word-break: break-word;
-      white-space: pre-wrap;
       position: relative;
+      animation: bubbleFadeIn 0.2s ease-out;
+    }
+
+    @keyframes bubbleFadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .chat-bubble.sent {
@@ -1156,7 +1331,7 @@
       background: var(--accent);
       color: #ffffff;
       border-bottom-right-radius: 4px;
-      box-shadow: 3px 3px 10px rgba(108, 99, 255, 0.35);
+      box-shadow: 2px 3px 8px rgba(108, 99, 255, 0.3);
     }
 
     .chat-bubble.received {
@@ -1167,12 +1342,17 @@
       border-bottom-left-radius: 4px;
     }
 
+    .bubble-text {
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
     .bubble-meta {
       display: flex;
       align-items: center;
       justify-content: flex-end;
       gap: 0.5rem;
-      margin-top: 0.35rem;
+      margin-top: 0.3rem;
       font-size: 0.7rem;
       opacity: 0.75;
     }
@@ -1183,9 +1363,10 @@
 
     /* Chat Composer */
     .chat-composer-box {
-      padding: 1.25rem 1.75rem;
+      padding: 0.9rem 1.5rem;
       border-top: 1px solid var(--border-subtle);
-      background: rgba(224, 229, 236, 0.5);
+      background: rgba(224, 229, 236, 0.85);
+      flex-shrink: 0;
     }
 
     .composer-form {
@@ -1201,14 +1382,14 @@
 
     .composer-input {
       width: 100%;
-      height: 52px;
+      height: 48px;
       background: var(--bg);
       border: 2px solid transparent;
       border-radius: 14px;
       box-shadow: var(--neu-inset-deep);
-      padding: 0 4.5rem 0 1.25rem;
+      padding: 0 4.5rem 0 1.15rem;
       font-family: var(--font-body);
-      font-size: 1rem;
+      font-size: 0.95rem;
       color: var(--text-primary);
       transition: all 0.2s ease;
     }
@@ -1626,14 +1807,45 @@
                 </div>
                 <h3>Create a New Room</h3>
                 <p>
-                  Spin up an isolated, temporary room code on the server. You can invite peers via a share link or instant QR code.
+                  Spin up an isolated, temporary room code. You can invite peers via a share link or instant QR code.
                 </p>
+
+                <!-- Dynamic Room Expiry Selector -->
+                <div class="expiry-selector-wrapper">
+                  <div class="expiry-selector-label">
+                    <span>Room Lifetime</span>
+                    <span style="font-size: 0.72rem; font-weight: 600; color: var(--accent);">Auto-Destruct</span>
+                  </div>
+                  <div class="expiry-presets" id="expiryPresetsGroup" role="radiogroup" aria-label="Room Expiry Duration">
+                    <button type="button" class="expiry-pill active" data-minutes="5" role="radio" aria-checked="true">5m</button>
+                    <button type="button" class="expiry-pill" data-minutes="10" role="radio" aria-checked="false">10m</button>
+                    <button type="button" class="expiry-pill" data-minutes="15" role="radio" aria-checked="false">15m</button>
+                    <button type="button" class="expiry-pill" data-minutes="20" role="radio" aria-checked="false">20m</button>
+                    <button type="button" class="expiry-pill" data-minutes="custom" role="radio" aria-checked="false">Custom</button>
+                  </div>
+                  <div class="custom-expiry-container" id="customExpiryContainer" style="display: none;">
+                    <input
+                      type="number"
+                      id="customExpiryInput"
+                      class="custom-expiry-input"
+                      min="1"
+                      max="60"
+                      value="15"
+                      placeholder="15"
+                      aria-label="Custom duration in minutes"
+                    />
+                    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">minutes (1 – 60 min)</span>
+                  </div>
+                  <div class="selected-lifetime-indicator" id="selectedLifetimeIndicator">
+                    Lifetime: <strong id="lifetimeDisplayLabel" style="color: var(--accent);">5 minutes</strong> (absolute countdown)
+                  </div>
+                </div>
               </div>
               <div>
                 <button class="neu-btn neu-btn-primary" style="width: 100%;" id="btnActionCreate">
                   <span id="createBtnText">Create Room Now</span>
                 </button>
-                <div class="input-helper-msg" id="createStatusMsg">Instant room creation in memory</div>
+                <div class="input-helper-msg" id="createStatusMsg">Browser-to-browser P2P via WebRTC</div>
               </div>
             </div>
 
@@ -2052,7 +2264,7 @@
           </div>
           <div class="student-note">
             <span>🎓</span>
-            <span>BCA Learning Project • Built with Node.js, Express & WebSockets</span>
+            <span>BCA Learning Project • Built with Vanilla JS & WebRTC Peer-to-Peer</span>
           </div>
         </div>
       </div>
@@ -2086,6 +2298,10 @@
           </div>
 
           <div class="chat-status-badges">
+            <div class="status-pill waiting" id="pillP2PStatus" title="WebRTC Direct P2P Status">
+              <span>●</span>
+              <span id="labelP2PStatus">P2P Initializing</span>
+            </div>
             <div class="status-pill online" id="pillParticipants">
               <span>●</span>
               <span id="labelParticipants">1 Online</span>
@@ -2111,6 +2327,12 @@
               Invite / QR
             </button>
           </div>
+        </div>
+
+        <!-- Live P2P Connection Status Banner -->
+        <div class="chat-status-banner" id="chatStatusBanner" style="display: none;">
+          <span id="chatStatusBannerText">Connecting directly to peer via WebRTC...</span>
+          <button id="btnDismissBanner" style="background:none; border:none; cursor:pointer; font-size:1.1rem; line-height:1; color:inherit;" aria-label="Dismiss">&times;</button>
         </div>
 
         <!-- Messages Area -->
@@ -2194,210 +2416,550 @@
   <div class="toast" id="appToast">Notification message</div>
 
   <!-- ==========================================================================
-       VANILLA JAVASCRIPT APPLICATION CONTROLLER
+       VANILLA JAVASCRIPT APPLICATION CONTROLLER — BROWSER-FIRST WEBRTC P2P
        ========================================================================== -->
   <script>
     (function () {
       "use strict";
 
       // ----- Application State -----------------------------------------------
-      let ws = null;
-      let isConnected = false;
-      let activeRoomCode = null;
-      let countdownSeconds = 300; // 5 minutes
-      let countdownInterval = null;
-      let reconnectAttempts = 0;
+      var peer = null;
+      var isHost = false;
+      var activeRoomCode = null;
+      var sessionKey = null;
+      var roomCreatedAt = 0;
+      var roomExpiresAt = 0;
+      var selectedDurationMinutes = 5;   // 5 min default
+      var hostConnection = null;         // For guest: connection to host
+      var activeConnections = [];        // For host: list of active guest DataConnections
+      var countdownInterval = null;
+      var connectTimeoutTimer = null;
+      var messageTimestamps = [];        // Rate limiting: max 5 messages per 2s
+
+      var SAFE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+      var PEER_CONFIG = {
+        debug: 1,
+        config: {
+          iceServers: [
+            { urls: "stun:stun.l.google.com:19302" },
+            { urls: "stun:stun1.l.google.com:19302" }
+          ]
+        }
+      };
 
       // ----- DOM Element Selectors -------------------------------------------
-      const landingScreen = document.getElementById("landingScreen");
-      const chatScreen = document.getElementById("chatScreen");
-      const topNavbar = document.getElementById("topNavbar");
+      var landingScreen = document.getElementById("landingScreen");
+      var chatScreen = document.getElementById("chatScreen");
+      var topNavbar = document.getElementById("topNavbar");
 
-      const navCreateBtn = document.getElementById("navCreateBtn");
-      const mobileCreateBtn = document.getElementById("mobileCreateBtn");
-      const heroCreateBtn = document.getElementById("heroCreateBtn");
-      const btnActionCreate = document.getElementById("btnActionCreate");
-      const createBtnText = document.getElementById("createBtnText");
-      const createStatusMsg = document.getElementById("createStatusMsg");
+      var navCreateBtn = document.getElementById("navCreateBtn");
+      var mobileCreateBtn = document.getElementById("mobileCreateBtn");
+      var heroCreateBtn = document.getElementById("heroCreateBtn");
+      var btnActionCreate = document.getElementById("btnActionCreate");
+      var createBtnText = document.getElementById("createBtnText");
+      var createStatusMsg = document.getElementById("createStatusMsg");
 
-      const btnActionJoin = document.getElementById("btnActionJoin");
-      const joinCodeInput = document.getElementById("joinCodeInput");
-      const joinStatusMsg = document.getElementById("joinStatusMsg");
+      var expiryPresetsGroup = document.getElementById("expiryPresetsGroup");
+      var customExpiryContainer = document.getElementById("customExpiryContainer");
+      var customExpiryInput = document.getElementById("customExpiryInput");
+      var lifetimeDisplayLabel = document.getElementById("lifetimeDisplayLabel");
 
-      const navToggleBtn = document.getElementById("navToggleBtn");
-      const mobileMenu = document.getElementById("mobileMenu");
+      var btnActionJoin = document.getElementById("btnActionJoin");
+      var joinCodeInput = document.getElementById("joinCodeInput");
+      var joinStatusMsg = document.getElementById("joinStatusMsg");
 
-      const btnLeaveRoom = document.getElementById("btnLeaveRoom");
-      const activeRoomCodeLabel = document.getElementById("activeRoomCodeLabel");
-      const btnCopyRoomCode = document.getElementById("btnCopyRoomCode");
-      const labelParticipants = document.getElementById("labelParticipants");
-      const labelCountdown = document.getElementById("labelCountdown");
-      const btnOpenShareModal = document.getElementById("btnOpenShareModal");
+      var navToggleBtn = document.getElementById("navToggleBtn");
+      var mobileMenu = document.getElementById("mobileMenu");
 
-      const chatMessagesArea = document.getElementById("chatMessagesArea");
-      const chatEmptyState = document.getElementById("chatEmptyState");
-      const composerForm = document.getElementById("composerForm");
-      const messageTextInput = document.getElementById("messageTextInput");
-      const charLimitIndicator = document.getElementById("charLimitIndicator");
+      var btnLeaveRoom = document.getElementById("btnLeaveRoom");
+      var activeRoomCodeLabel = document.getElementById("activeRoomCodeLabel");
+      var btnCopyRoomCode = document.getElementById("btnCopyRoomCode");
+      var pillP2PStatus = document.getElementById("pillP2PStatus");
+      var labelP2PStatus = document.getElementById("labelP2PStatus");
+      var pillParticipants = document.getElementById("pillParticipants");
+      var labelParticipants = document.getElementById("labelParticipants");
+      var pillCountdown = document.getElementById("pillCountdown");
+      var labelCountdown = document.getElementById("labelCountdown");
+      var btnOpenShareModal = document.getElementById("btnOpenShareModal");
 
-      const inviteModal = document.getElementById("inviteModal");
-      const btnCloseInviteModal = document.getElementById("btnCloseInviteModal");
-      const modalQrImg = document.getElementById("modalQrImg");
-      const shareUrlText = document.getElementById("shareUrlText");
-      const btnModalCopyLink = document.getElementById("btnModalCopyLink");
-      const btnModalNativeShare = document.getElementById("btnModalNativeShare");
-      const appToast = document.getElementById("appToast");
+      var chatStatusBanner = document.getElementById("chatStatusBanner");
+      var chatStatusBannerText = document.getElementById("chatStatusBannerText");
+      var btnDismissBanner = document.getElementById("btnDismissBanner");
+
+      var chatMessagesArea = document.getElementById("chatMessagesArea");
+      var chatEmptyState = document.getElementById("chatEmptyState");
+      var composerForm = document.getElementById("composerForm");
+      var messageTextInput = document.getElementById("messageTextInput");
+      var btnSendMessage = document.getElementById("btnSendMessage");
+      var charLimitIndicator = document.getElementById("charLimitIndicator");
+
+      var inviteModal = document.getElementById("inviteModal");
+      var btnCloseInviteModal = document.getElementById("btnCloseInviteModal");
+      var modalQrImg = document.getElementById("modalQrImg");
+      var shareUrlText = document.getElementById("shareUrlText");
+      var btnModalCopyLink = document.getElementById("btnModalCopyLink");
+      var btnModalNativeShare = document.getElementById("btnModalNativeShare");
+      var appToast = document.getElementById("appToast");
 
       document.getElementById("currentYear").textContent = new Date().getFullYear();
 
-      // ----- Utilities -------------------------------------------------------
+      // ----- Notification & Status Helpers -----------------------------------
 
       function showToast(message) {
         appToast.textContent = message;
         appToast.classList.add("show");
         setTimeout(function () {
           appToast.classList.remove("show");
-        }, 2200);
+        }, 2500);
       }
 
-      function escapeHTML(str) {
-        var div = document.createElement("div");
-        div.textContent = str;
-        return div.innerHTML;
+      function showBanner(text, type) {
+        if (!chatStatusBanner) return;
+        chatStatusBanner.className = "chat-status-banner " + (type || "");
+        chatStatusBannerText.textContent = text;
+        chatStatusBanner.style.display = "flex";
       }
 
-      function getShareUrl(code) {
+      function hideBanner() {
+        if (!chatStatusBanner) return;
+        chatStatusBanner.style.display = "none";
+      }
+
+      if (btnDismissBanner) {
+        btnDismissBanner.addEventListener("click", hideBanner);
+      }
+
+      function updateP2PStatus(stateClass, text) {
+        if (!pillP2PStatus || !labelP2PStatus) return;
+        pillP2PStatus.className = "status-pill " + stateClass;
+        labelP2PStatus.textContent = text;
+      }
+
+      function updateParticipantCount(count) {
+        if (!labelParticipants) return;
+        labelParticipants.textContent = count + (count === 1 ? " Online" : " Online");
+      }
+
+      // ----- Cryptographic & Room Code Generators -----------------------------
+
+      function generateRoomCode() {
+        var code = "";
+        var randValues = new Uint32Array(6);
+        (window.crypto || window.msCrypto).getRandomValues(randValues);
+        for (var i = 0; i < 6; i++) {
+          code += SAFE_CHARS[randValues[i] % SAFE_CHARS.length];
+        }
+        return code;
+      }
+
+      function generateSessionKey() {
+        var bytes = new Uint8Array(8);
+        (window.crypto || window.msCrypto).getRandomValues(bytes);
+        return Array.from(bytes, function (b) {
+          return ("0" + b.toString(16)).slice(-2);
+        }).join("");
+      }
+
+      function getShareUrl(code, key, expiresAt) {
         var origin = window.location.origin;
-        return origin + "/?room=" + encodeURIComponent(code);
+        var path = window.location.pathname;
+        var url = origin + path + "?room=" + encodeURIComponent(code);
+        var hashParts = [];
+        if (key) hashParts.push("key=" + encodeURIComponent(key));
+        if (expiresAt) hashParts.push("exp=" + encodeURIComponent(expiresAt));
+        if (hashParts.length > 0) {
+          url += "#" + hashParts.join("&");
+        }
+        return url;
       }
 
-      // ----- WebSocket Connection --------------------------------------------
+      // ----- Dynamic Expiry Selector Management ------------------------------
 
-      function connectWebSocket() {
-        var protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        var wsUrl = protocol + "//" + window.location.host;
+      function setupExpirySelector() {
+        if (!expiryPresetsGroup) return;
 
-        try {
-          ws = new WebSocket(wsUrl);
-        } catch (e) {
-          console.error("Failed to construct WebSocket:", e);
+        var presetButtons = expiryPresetsGroup.querySelectorAll(".expiry-pill");
+        presetButtons.forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            presetButtons.forEach(function (b) {
+              b.classList.remove("active");
+              b.setAttribute("aria-checked", "false");
+            });
+            btn.classList.add("active");
+            btn.setAttribute("aria-checked", "true");
+
+            var mode = btn.dataset.minutes;
+            if (mode === "custom") {
+              customExpiryContainer.style.display = "flex";
+              var val = parseInt(customExpiryInput.value, 10);
+              if (isNaN(val) || val < 1) val = 15;
+              if (val > 60) val = 60;
+              selectedDurationMinutes = val;
+              customExpiryInput.value = val;
+              customExpiryInput.focus();
+            } else {
+              customExpiryContainer.style.display = "none";
+              selectedDurationMinutes = parseInt(mode, 10) || 5;
+            }
+            updateLifetimeDisplay();
+          });
+        });
+
+        if (customExpiryInput) {
+          customExpiryInput.addEventListener("input", function () {
+            var val = parseInt(customExpiryInput.value, 10);
+            if (!isNaN(val)) {
+              if (val > 60) val = 60;
+              if (val < 1) val = 1;
+              selectedDurationMinutes = val;
+            } else {
+              selectedDurationMinutes = 15;
+            }
+            updateLifetimeDisplay();
+          });
+        }
+      }
+
+      function updateLifetimeDisplay() {
+        if (!lifetimeDisplayLabel) return;
+        lifetimeDisplayLabel.textContent = selectedDurationMinutes + " minutes";
+      }
+
+      // ----- WebRTC Host Flow -------------------------------------------------
+
+      function triggerCreateRoom() {
+        if (typeof Peer === "undefined") {
+          showToast("WebRTC library loading... please check network.");
           return;
         }
 
-        ws.onopen = function () {
-          isConnected = true;
-          reconnectAttempts = 0;
-          console.log("[WebSocket] Connected successfully");
-          checkUrlRoomParameter();
-        };
+        cleanupExistingPeer();
+        setCreateButtonLoading(true);
 
-        ws.onmessage = function (event) {
-          try {
-            var data = JSON.parse(event.data);
-            handleIncomingMessage(data);
-          } catch (err) {
-            console.error("Failed to parse incoming WebSocket message:", err);
-          }
-        };
+        var code = generateRoomCode();
+        var key = generateSessionKey();
+        var durationMinutes = selectedDurationMinutes || 5;
+        var now = Date.now();
+        var lifetimeMs = durationMinutes * 60 * 1000;
+        var expiresAt = now + lifetimeMs;
 
-        ws.onclose = function () {
-          isConnected = false;
-          console.warn("[WebSocket] Disconnected");
-          // Reconnect with exponential backoff
-          if (reconnectAttempts < 5) {
-            var delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 8000);
-            reconnectAttempts++;
-            setTimeout(connectWebSocket, delay);
-          }
-        };
+        roomCreatedAt = now;
+        roomExpiresAt = expiresAt;
 
-        ws.onerror = function (err) {
-          console.error("[WebSocket Error]", err);
-        };
-      }
+        var hostPeerId = "anomoly-v2-" + code.toUpperCase();
 
-      function sendCommand(payload) {
-        if (!ws || ws.readyState !== WebSocket.OPEN) {
-          showToast("Reconnecting to server... Please try again.");
-          return false;
+        try {
+          peer = new Peer(hostPeerId, PEER_CONFIG);
+        } catch (e) {
+          console.error("Peer instantiation failed:", e);
+          showToast("Failed to initialize WebRTC peer.");
+          setCreateButtonLoading(false);
+          return;
         }
-        ws.send(JSON.stringify(payload));
-        return true;
+
+        peer.on("open", function (id) {
+          console.log("[Host] WebRTC Peer active with ID:", id);
+          isHost = true;
+          activeRoomCode = code;
+          sessionKey = key;
+          activeConnections = [];
+
+          // Preserve key and expiration in URL hash (browsers never send hash to server)
+          window.history.replaceState(null, "", getShareUrl(code, key, expiresAt));
+
+          setCreateButtonLoading(false);
+          enterRoom(code, true, expiresAt);
+          updateP2PStatus("waiting", "Waiting for Peer");
+          showToast("Room " + code + " created (" + durationMinutes + "m lifetime)!");
+        });
+
+        peer.on("connection", function (conn) {
+          console.log("[Host] Incoming guest connection attempt:", conn.peer);
+          setupHostConnection(conn);
+        });
+
+        peer.on("error", function (err) {
+          console.error("[Host] Peer error:", err);
+          if (err.type === "unavailable-id") {
+            // Code collision — retry seamlessly
+            console.warn("[Host] Code collision detected, retrying...");
+            cleanupExistingPeer();
+            triggerCreateRoom();
+            return;
+          }
+          setCreateButtonLoading(false);
+          showToast("Connection notice: " + (err.type || "Peer error"));
+        });
       }
 
-      // ----- Protocol Message Handling ---------------------------------------
+      function setupHostConnection(conn) {
+        conn.on("open", function () {
+          console.log("[Host] Guest DataChannel open:", conn.peer);
+        });
 
-      function handleIncomingMessage(msg) {
-        switch (msg.type) {
-          case "roomCreated":
-            setCreateButtonLoading(false);
-            enterRoom(msg.code);
-            showToast("Room " + msg.code + " created!");
+        conn.on("data", function (raw) {
+          handleHostIncomingData(conn, raw);
+        });
+
+        conn.on("close", function () {
+          console.log("[Host] Guest disconnected:", conn.peer);
+          removeHostConnection(conn);
+        });
+
+        conn.on("error", function (err) {
+          console.warn("[Host] DataChannel error on conn:", err);
+          removeHostConnection(conn);
+        });
+      }
+
+      function handleHostIncomingData(conn, data) {
+        if (!data || typeof data !== "object") return;
+
+        switch (data.type) {
+          case "auth":
+            // Verify optional session secret
+            if (sessionKey && data.key && data.key !== sessionKey) {
+              conn.send({ type: "error", text: "Invalid room security key." });
+              conn.close();
+              return;
+            }
+
+            // Check if room is already expired
+            if (Date.now() >= roomExpiresAt) {
+              conn.send({ type: "error", text: "Room has already expired." });
+              conn.close();
+              return;
+            }
+
+            // Accept guest
+            if (activeConnections.indexOf(conn) === -1) {
+              activeConnections.push(conn);
+            }
+
+            conn.send({
+              type: "auth_ok",
+              participantCount: activeConnections.length + 1,
+              createdAt: roomCreatedAt,
+              expiresAt: roomExpiresAt
+            });
+
+            // Update participant counts across peers
+            broadcastToGuests({
+              type: "participantCount",
+              count: activeConnections.length + 1
+            });
+
+            updateParticipantCount(activeConnections.length + 1);
+            updateP2PStatus("online", "P2P Direct");
+            showBanner("Direct WebRTC DataChannel connection established (DTLS encrypted).", "connected");
+            showToast("A participant joined your room!");
             break;
 
-          case "roomJoined":
-            enterRoom(msg.code);
-            if (Array.isArray(msg.recentMessages)) {
-              msg.recentMessages.forEach(function (m) {
-                renderChatMessage(m.text, m.timestamp, false);
+          case "chat":
+            if (Date.now() >= roomExpiresAt) {
+              return; // Room expired, ignore
+            }
+            if (typeof data.text === "string" && data.text.trim().length > 0) {
+              var cleanText = data.text.slice(0, 500);
+              renderChatMessage(cleanText, data.timestamp || Date.now(), false);
+
+              // Relay to all other connected guests
+              activeConnections.forEach(function (c) {
+                if (c !== conn && c.open) {
+                  try {
+                    c.send(data);
+                  } catch (e) {}
+                }
               });
             }
-            showToast("Joined room " + msg.code);
             break;
 
-          case "message":
-            if (msg.message) {
-              var isSelf = false; // Sender is anonymous
-              renderChatMessage(msg.message.text, msg.message.timestamp, isSelf);
-              resetCountdown();
+          case "leave":
+            removeHostConnection(conn);
+            break;
+        }
+      }
+
+      function removeHostConnection(conn) {
+        var idx = activeConnections.indexOf(conn);
+        if (idx !== -1) {
+          activeConnections.splice(idx, 1);
+        }
+
+        var total = activeConnections.length + 1;
+        updateParticipantCount(total);
+        broadcastToGuests({ type: "participantCount", count: total });
+
+        if (activeConnections.length === 0) {
+          updateP2PStatus("waiting", "Waiting for Peer");
+          showBanner("Peer disconnected. Waiting for someone to join...", "warning");
+        }
+      }
+
+      function broadcastToGuests(payload) {
+        activeConnections.forEach(function (conn) {
+          if (conn.open) {
+            try {
+              conn.send(payload);
+            } catch (e) {}
+          }
+        });
+      }
+
+      // ----- WebRTC Guest Flow ------------------------------------------------
+
+      function triggerJoinRoom(targetCode, targetKey, targetExpiresAt) {
+        var code = (targetCode || joinCodeInput.value).trim().toUpperCase();
+        var key = targetKey || sessionKey;
+
+        if (code.length !== 6) {
+          joinStatusMsg.textContent = "Please enter an exact 6-character room code.";
+          joinStatusMsg.classList.add("error");
+          joinCodeInput.focus();
+          return;
+        }
+
+        // Check if invitation has explicit expiration timestamp in the past
+        if (targetExpiresAt && Date.now() >= targetExpiresAt) {
+          joinStatusMsg.textContent = "⚠️ This room invitation has expired.";
+          joinStatusMsg.classList.add("error");
+          showBanner("⚠️ This room invitation has expired. Rooms self-destruct after their preset lifetime.", "error");
+          showToast("Invitation expired.");
+          return;
+        }
+
+        if (typeof Peer === "undefined") {
+          showToast("WebRTC library loading... please check network.");
+          return;
+        }
+
+        cleanupExistingPeer();
+        joinStatusMsg.textContent = "Connecting to host...";
+        joinStatusMsg.classList.remove("error");
+
+        try {
+          peer = new Peer(PEER_CONFIG);
+        } catch (e) {
+          joinStatusMsg.textContent = "Failed to initialize WebRTC.";
+          joinStatusMsg.classList.add("error");
+          return;
+        }
+
+        var hostPeerId = "anomoly-v2-" + code;
+
+        peer.on("open", function (guestId) {
+          console.log("[Guest] Peer active with ID:", guestId);
+          console.log("[Guest] Connecting to host:", hostPeerId);
+
+          hostConnection = peer.connect(hostPeerId, { reliable: true });
+
+          // 12-second NAT / Firewall timeout warning
+          connectTimeoutTimer = setTimeout(function () {
+            showBanner(
+              "⚠️ Direct P2P connection taking longer than expected. STUN was unable to traverse restrictive NAT/firewall. A TURN relay would normally be needed here.",
+              "warning"
+            );
+          }, 12000);
+
+          setupGuestConnection(hostConnection, code, key, targetExpiresAt);
+        });
+
+        peer.on("error", function (err) {
+          console.error("[Guest] Peer error:", err);
+          clearTimeout(connectTimeoutTimer);
+          joinStatusMsg.textContent = "Could not reach room " + code + ". Verify the code or check if host is online.";
+          joinStatusMsg.classList.add("error");
+          showToast("Could not connect to room " + code);
+        });
+      }
+
+      function setupGuestConnection(conn, code, key, targetExpiresAt) {
+        conn.on("open", function () {
+          clearTimeout(connectTimeoutTimer);
+          console.log("[Guest] DataChannel open to host");
+          conn.send({
+            type: "auth",
+            key: key || ""
+          });
+        });
+
+        conn.on("data", function (data) {
+          handleGuestIncomingData(conn, data, code, key, targetExpiresAt);
+        });
+
+        conn.on("close", function () {
+          console.warn("[Guest] Connection to host closed");
+          updateP2PStatus("disconnected", "Host Disconnected");
+          showBanner("The room host disconnected or closed the room.", "error");
+          showToast("Host disconnected.");
+        });
+
+        conn.on("error", function (err) {
+          console.error("[Guest] DataChannel error:", err);
+          showToast("WebRTC DataChannel error.");
+        });
+      }
+
+      function handleGuestIncomingData(conn, data, code, key, targetExpiresAt) {
+        if (!data || typeof data !== "object") return;
+
+        switch (data.type) {
+          case "auth_ok":
+            isHost = false;
+            activeRoomCode = code;
+            sessionKey = key;
+            roomCreatedAt = data.createdAt || Date.now();
+            roomExpiresAt = data.expiresAt || targetExpiresAt || (Date.now() + 5 * 60 * 1000);
+
+            enterRoom(code, false, roomExpiresAt);
+            updateParticipantCount(data.participantCount || 2);
+            updateP2PStatus("online", "P2P Direct");
+            showBanner("Connected directly to host via WebRTC DataChannel (Encrypted).", "connected");
+            showToast("Joined room " + code + "!");
+            break;
+
+          case "chat":
+            if (Date.now() >= roomExpiresAt) return;
+            if (typeof data.text === "string" && data.text.trim().length > 0) {
+              var cleanText = data.text.slice(0, 500);
+              renderChatMessage(cleanText, data.timestamp || Date.now(), false);
             }
             break;
 
-          case "roomState":
-            if (typeof msg.participantCount === "number") {
-              labelParticipants.textContent =
-                msg.participantCount + (msg.participantCount === 1 ? " Online" : " Online");
+          case "participantCount":
+            if (typeof data.count === "number") {
+              updateParticipantCount(data.count);
             }
-            break;
-
-          case "leftRoom":
-            leaveRoomView();
-            showToast("Left room " + msg.code);
             break;
 
           case "error":
-            handleServerError(msg);
+            showToast(data.text || "Connection rejected by host.");
+            leaveRoomView();
             break;
-
-          default:
-            console.log("Unhandled server payload:", msg);
         }
       }
 
-      function handleServerError(msg) {
-        setCreateButtonLoading(false);
-        var errText = msg.text || "An unexpected error occurred.";
-
-        if (msg.code === "ROOM_EXPIRED" || msg.code === "ROOM_NOT_FOUND") {
-          joinStatusMsg.textContent = errText;
-          joinStatusMsg.classList.add("error");
-          showToast(errText);
-          if (activeRoomCode) {
-            leaveRoomView();
-          }
-        } else if (msg.code === "INVALID_CODE_FORMAT") {
-          joinStatusMsg.textContent = errText;
-          joinStatusMsg.classList.add("error");
-        } else if (msg.code === "RATE_LIMITED") {
-          showToast("⚠️ " + errText);
-        } else {
-          showToast(errText);
+      function cleanupExistingPeer() {
+        clearTimeout(connectTimeoutTimer);
+        if (hostConnection) {
+          try { hostConnection.close(); } catch (e) {}
+          hostConnection = null;
+        }
+        if (activeConnections && activeConnections.length > 0) {
+          activeConnections.forEach(function (c) {
+            try { c.close(); } catch (e) {}
+          });
+          activeConnections = [];
+        }
+        if (peer) {
+          try { peer.destroy(); } catch (e) {}
+          peer = null;
         }
       }
 
       // ----- Room UI Transitions ----------------------------------------------
 
-      function enterRoom(code) {
+      function enterRoom(code, amHost, expiresAt) {
         activeRoomCode = code;
         activeRoomCodeLabel.textContent = code;
 
@@ -2409,15 +2971,23 @@
         chatMessagesArea.appendChild(chatEmptyState);
         chatEmptyState.style.display = "block";
 
-        resetCountdown();
-        updateInviteModalData(code);
+        messageTextInput.disabled = false;
+        btnSendMessage.disabled = false;
+
+        startAbsoluteCountdown(expiresAt);
+        updateInviteModalData(code, sessionKey, expiresAt);
         window.scrollTo(0, 0);
         messageTextInput.focus();
       }
 
       function leaveRoomView() {
+        cleanupExistingPeer();
         activeRoomCode = null;
+        isHost = false;
+        sessionKey = null;
+        roomExpiresAt = 0;
         clearInterval(countdownInterval);
+        hideBanner();
 
         chatScreen.style.display = "none";
         topNavbar.style.display = "block";
@@ -2426,9 +2996,13 @@
         chatMessagesArea.innerHTML = "";
         messageTextInput.value = "";
         updateCharCounter();
+
+        // Clean query and hash
+        window.history.replaceState(null, "", window.location.pathname);
         window.scrollTo(0, 0);
       }
 
+      // Safe rendering preventing any HTML/script injection
       function renderChatMessage(text, timestamp, isSelf) {
         chatEmptyState.style.display = "none";
 
@@ -2437,7 +3011,6 @@
 
         var date = new Date(timestamp || Date.now());
         var timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-
         var metaText = isSelf ? "You · " + timeStr : "Anonymous · " + timeStr;
 
         var textDiv = document.createElement("div");
@@ -2455,84 +3028,116 @@
         chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
       }
 
-      function resetCountdown() {
-        countdownSeconds = 300;
-        updateCountdownLabel();
+      // ----- Absolute Lifetime Countdown -------------------------------------
+
+      function startAbsoluteCountdown(targetExpiresAt) {
+        roomExpiresAt = targetExpiresAt;
         clearInterval(countdownInterval);
-        countdownInterval = setInterval(function () {
-          countdownSeconds--;
-          if (countdownSeconds <= 0) {
+
+        function updateTick() {
+          var remainingMs = roomExpiresAt - Date.now();
+          if (remainingMs <= 0) {
             clearInterval(countdownInterval);
             labelCountdown.textContent = "00:00";
-            showToast("Room has expired due to inactivity.");
+            messageTextInput.disabled = true;
+            btnSendMessage.disabled = true;
+            showBanner("⚠️ Room has expired. All peer connections closed and data wiped.", "error");
+            showToast("Room lifetime reached. Room expired.");
+            cleanupExistingPeer();
           } else {
-            updateCountdownLabel();
+            var totalSecs = Math.ceil(remainingMs / 1000);
+            var mins = Math.floor(totalSecs / 60);
+            var secs = totalSecs % 60;
+            labelCountdown.textContent =
+              (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
           }
-        }, 1000);
-      }
+        }
 
-      function updateCountdownLabel() {
-        var mins = Math.floor(countdownSeconds / 60);
-        var secs = countdownSeconds % 60;
-        labelCountdown.textContent =
-          (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+        updateTick();
+        countdownInterval = setInterval(updateTick, 1000);
       }
 
       function setCreateButtonLoading(loading) {
         btnActionCreate.disabled = loading;
-        createBtnText.textContent = loading ? "Creating Room..." : "Create Room Now";
+        createBtnText.textContent = loading ? "Initializing P2P..." : "Create Room Now";
       }
 
-      function updateInviteModalData(code) {
-        var url = getShareUrl(code);
+      // ----- Offline QR Code Generation ---------------------------------------
+
+      function updateInviteModalData(code, key, expiresAt) {
+        var url = getShareUrl(code, key, expiresAt);
         shareUrlText.textContent = url;
-        modalQrImg.src = "/api/qr?url=" + encodeURIComponent(url);
-        modalQrImg.onerror = function () {
+
+        if (typeof QRCode !== "undefined" && QRCode.toDataURL) {
+          QRCode.toDataURL(
+            url,
+            {
+              width: 240,
+              margin: 1,
+              errorCorrectionLevel: "M",
+              color: { dark: "#3D4852", light: "#E0E5EC" }
+            },
+            function (err, dataUri) {
+              if (!err && dataUri) {
+                modalQrImg.src = dataUri;
+                modalQrImg.style.display = "block";
+              }
+            }
+          );
+        } else {
           modalQrImg.style.display = "none";
-        };
+        }
       }
+
+      // ----- URL Parameter Parsing (1-click invitation join) -------------------
 
       function checkUrlRoomParameter() {
         var params = new URLSearchParams(window.location.search);
         var roomParam = params.get("room") || params.get("join");
+        var hash = window.location.hash || "";
+        var keyParam = null;
+        var expParam = null;
+
+        var keyMatch = hash.match(/key=([0-9a-fA-F]+)/);
+        if (keyMatch) {
+          keyParam = keyMatch[1];
+        }
+
+        var expMatch = hash.match(/exp=([0-9]+)/);
+        if (expMatch) {
+          expParam = parseInt(expMatch[1], 10);
+        }
+
         if (roomParam) {
-          roomParam = roomParam.trim();
+          roomParam = roomParam.trim().toUpperCase();
           if (roomParam.length === 6) {
             joinCodeInput.value = roomParam;
-            var startSection = document.getElementById("start");
-            if (startSection) {
-              startSection.scrollIntoView({ behavior: "smooth" });
+
+            // Check if already expired before connecting
+            if (expParam && Date.now() >= expParam) {
+              joinStatusMsg.textContent = "⚠️ This room invitation has already expired.";
+              joinStatusMsg.classList.add("error");
+              showBanner("⚠️ This room invitation has expired. Rooms self-destruct after their preset lifetime.", "error");
+              showToast("Invitation has expired.");
+              return;
             }
+
             showToast("Invitation detected for room " + roomParam);
+            setTimeout(function () {
+              triggerJoinRoom(roomParam, keyParam, expParam);
+            }, 300);
           }
         }
       }
 
-      // ----- User Action Handlers --------------------------------------------
-
-      function triggerCreateRoom() {
-        if (!isConnected) {
-          showToast("Connecting to server... please wait.");
-          return;
-        }
-        setCreateButtonLoading(true);
-        sendCommand({ type: "createRoom" });
-      }
-
-      function triggerJoinRoom() {
-        var code = joinCodeInput.value.trim();
-        if (code.length !== 6) {
-          joinStatusMsg.textContent = "Please enter an exact 6-character room code.";
-          joinStatusMsg.classList.add("error");
-          joinCodeInput.focus();
-          return;
-        }
-        joinStatusMsg.textContent = "Joining room...";
-        joinStatusMsg.classList.remove("error");
-        sendCommand({ type: "joinRoom", code: code });
-      }
+      // ----- Message Dispatch ------------------------------------------------
 
       function triggerSendMessage() {
+        if (Date.now() >= roomExpiresAt) {
+          showToast("Room has expired.");
+          return;
+        }
+
         var text = messageTextInput.value.trim();
         if (!text) return;
 
@@ -2541,21 +3146,46 @@
           return;
         }
 
-        var sent = sendCommand({ type: "sendMessage", text: text });
-        if (sent) {
-          // Render immediate local preview as "You"
-          renderChatMessage(text, Date.now(), true);
-          messageTextInput.value = "";
-          updateCharCounter();
-          resetCountdown();
+        // Rate limiting: max 5 messages per 2s
+        var now = Date.now();
+        messageTimestamps = messageTimestamps.filter(function (t) { return now - t < 2000; });
+        if (messageTimestamps.length >= 5) {
+          showToast("Please slow down. Rate limit exceeded.");
+          return;
         }
+        messageTimestamps.push(now);
+
+        var payload = {
+          type: "chat",
+          text: text,
+          timestamp: now
+        };
+
+        if (isHost) {
+          // Host sends to all active guests
+          broadcastToGuests(payload);
+          renderChatMessage(text, now, true);
+        } else if (hostConnection && hostConnection.open) {
+          // Guest sends to host
+          hostConnection.send(payload);
+          renderChatMessage(text, now, true);
+        } else {
+          showToast("No active peer connection to send message.");
+          return;
+        }
+
+        messageTextInput.value = "";
+        updateCharCounter();
       }
 
       function triggerLeaveRoom() {
-        if (activeRoomCode) {
-          sendCommand({ type: "leaveRoom" });
+        if (isHost) {
+          broadcastToGuests({ type: "leave" });
+        } else if (hostConnection && hostConnection.open) {
+          try { hostConnection.send({ type: "leave" }); } catch (e) {}
         }
         leaveRoomView();
+        showToast("Left the room.");
       }
 
       function copyTextToClipboard(text, successMessage) {
@@ -2599,7 +3229,9 @@
 
       // ----- Event Listeners -------------------------------------------------
 
-      // Navigation & Hero
+      setupExpirySelector();
+
+      // Navigation & Hero buttons
       navCreateBtn.addEventListener("click", triggerCreateRoom);
       mobileCreateBtn.addEventListener("click", function () {
         closeMobileMenu();
@@ -2608,8 +3240,10 @@
       heroCreateBtn.addEventListener("click", triggerCreateRoom);
       btnActionCreate.addEventListener("click", triggerCreateRoom);
 
-      // Join
-      btnActionJoin.addEventListener("click", triggerJoinRoom);
+      // Join room buttons
+      btnActionJoin.addEventListener("click", function () {
+        triggerJoinRoom();
+      });
       joinCodeInput.addEventListener("keydown", function (e) {
         if (e.key === "Enter") {
           e.preventDefault();
@@ -2643,7 +3277,7 @@
         }
       });
 
-      // Modal
+      // Share Modal
       btnOpenShareModal.addEventListener("click", function () {
         inviteModal.classList.add("open");
       });
@@ -2660,14 +3294,14 @@
 
       btnModalCopyLink.addEventListener("click", function () {
         if (activeRoomCode) {
-          var url = getShareUrl(activeRoomCode);
+          var url = getShareUrl(activeRoomCode, sessionKey, roomExpiresAt);
           copyTextToClipboard(url, "Invitation link copied to clipboard!");
         }
       });
 
       btnModalNativeShare.addEventListener("click", function () {
         if (!activeRoomCode) return;
-        var url = getShareUrl(activeRoomCode);
+        var url = getShareUrl(activeRoomCode, sessionKey, roomExpiresAt);
         if (navigator.share) {
           navigator.share({
             title: "Join me on Anomoly Chat",
@@ -2705,8 +3339,8 @@
         mobileMenu.classList.remove("open");
       };
 
-      // Start application
-      connectWebSocket();
+      // Initialization on DOM ready
+      checkUrlRoomParameter();
     })();
   </script>
 </body>

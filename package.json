@@ -24,6 +24,7 @@
   "homepage": "https://github.com/skandachandrashekar335-wq/anomoly-chat#readme",
   "dependencies": {
     "express": "^5.3.0",
+    "peerjs": "^1.5.5",
     "qrcode": "^1.5.4",
     "typescript": "^7.0.2",
     "ws": "^8.22.0"

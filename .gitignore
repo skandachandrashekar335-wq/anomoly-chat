@@ -17,3 +17,5 @@ dist/
 # Performance
 .ds_store
 .DS_Store
+.vercel
+.env*

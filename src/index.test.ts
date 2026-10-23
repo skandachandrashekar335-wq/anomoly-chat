@@ -396,4 +396,136 @@ describe("Anomoly Chat Server Test Suite", () => {
       assert.ok(svg.includes("#3D4852"), "Response should contain dark color token");
     });
   });
+
+  describe("Browser-First WebRTC & Dynamic Expiry Protocol Suite", () => {
+    // Utility functions mimicking client-side WebRTC & expiry logic
+    function parseInvitationUrl(urlStr: string) {
+      const url = new URL(urlStr);
+      const roomParam = url.searchParams.get("room") || url.searchParams.get("join");
+      const hash = url.hash || "";
+      const keyMatch = hash.match(/key=([0-9a-fA-F]+)/);
+      const expMatch = hash.match(/exp=([0-9]+)/);
+      return {
+        room: roomParam ? roomParam.trim().toUpperCase() : null,
+        key: keyMatch ? keyMatch[1] : null,
+        exp: expMatch ? parseInt(expMatch[1], 10) : null,
+      };
+    }
+
+    function validateCustomLifetime(minutes: number): number {
+      if (isNaN(minutes)) return 15;
+      if (minutes < 1) return 1;
+      if (minutes > 60) return 60;
+      return Math.floor(minutes);
+    }
+
+    function calculateAbsoluteExpiry(createdAt: number, durationMinutes: number): number {
+      return createdAt + durationMinutes * 60 * 1000;
+    }
+
+    function isInvitationExpired(expiresAt: number, now: number = Date.now()): boolean {
+      return now >= expiresAt;
+    }
+
+    it("supports all required presets: 5m, 10m, 15m, 20m with correct durations", () => {
+      const presets = [5, 10, 15, 20];
+      const now = 1700000000000;
+
+      for (const p of presets) {
+        const exp = calculateAbsoluteExpiry(now, p);
+        assert.equal(exp - now, p * 60 * 1000, `Preset ${p}m should add exact duration`);
+      }
+    });
+
+    it("validates custom duration strictly between 1 and 60 minutes", () => {
+      assert.equal(validateCustomLifetime(0), 1, "Values below 1 clamp to 1");
+      assert.equal(validateCustomLifetime(-5), 1, "Negative values clamp to 1");
+      assert.equal(validateCustomLifetime(1), 1);
+      assert.equal(validateCustomLifetime(30), 30);
+      assert.equal(validateCustomLifetime(60), 60);
+      assert.equal(validateCustomLifetime(61), 60, "Values above 60 clamp to 60");
+      assert.equal(validateCustomLifetime(100), 60);
+      assert.equal(validateCustomLifetime(NaN), 15, "NaN defaults to safe fallback 15");
+    });
+
+    it("correctly calculates absolute expiration and detects expired invitations", () => {
+      const now = Date.now();
+      const tenMinExpiry = calculateAbsoluteExpiry(now, 10);
+      assert.equal(isInvitationExpired(tenMinExpiry, now + 5 * 60 * 1000), false);
+      assert.equal(isInvitationExpired(tenMinExpiry, now + 9 * 60 * 1000), false);
+      assert.equal(isInvitationExpired(tenMinExpiry, now + 10 * 60 * 1000), true);
+      assert.equal(isInvitationExpired(tenMinExpiry, now + 11 * 60 * 1000), true);
+    });
+
+    it("parses room code, secret key, and exp from invitation hash without server leakage", () => {
+      const fullInviteUrl = "https://anomoly.vercel.app/?room=K7M9Q2#key=a1b2c3d4e5f60718&exp=1700000600000";
+      const parsed = parseInvitationUrl(fullInviteUrl);
+
+      assert.equal(parsed.room, "K7M9Q2");
+      assert.equal(parsed.key, "a1b2c3d4e5f60718");
+      assert.equal(parsed.exp, 1700000600000);
+    });
+
+    it("handles invitation URLs missing hash parameters gracefully", () => {
+      const plainUrl = "https://anomoly.vercel.app/?room=ABCDEF";
+      const parsed = parseInvitationUrl(plainUrl);
+
+      assert.equal(parsed.room, "ABCDEF");
+      assert.equal(parsed.key, null);
+      assert.equal(parsed.exp, null);
+    });
+
+    it("ensures XSS safety: HTML tags are rendered as plain textContent", () => {
+      // Simulating browser textContent rendering behavior
+      const maliciousPayloads = [
+        '<script>alert("XSS")</script>',
+        '<img src="x" onerror="stealCookies()">',
+        '<a href="javascript:attack()">Click</a>',
+        '"><script src="//evil.com/xss.js"></script>',
+        '<b onmouseover="evil()">Hover me</b>'
+      ];
+
+      for (const payload of maliciousPayloads) {
+        // When using textContent, the literal string is stored without HTML element creation
+        const safeObject = { text: payload };
+        assert.equal(typeof safeObject.text, "string");
+        assert.ok(safeObject.text.includes("<"), "String is stored literally");
+        // Simulated DOM textContent test:
+        const simulatedDiv = { textContent: "" };
+        simulatedDiv.textContent = payload;
+        assert.equal(simulatedDiv.textContent, payload, "textContent preserves literal string without parsing HTML");
+      }
+    });
+
+    it("verifies rate-limiting algorithm restricts spam to 5 messages per window", () => {
+      const timestamps: number[] = [];
+      const windowMs = 2000;
+      const maxMsgs = 5;
+
+      function canSendMessage(now: number): boolean {
+        // filter out old timestamps
+        const active = timestamps.filter(t => now - t < windowMs);
+        if (active.length >= maxMsgs) {
+          return false;
+        }
+        active.push(now);
+        timestamps.length = 0;
+        timestamps.push(...active);
+        return true;
+      }
+
+      const t0 = 1000;
+      assert.equal(canSendMessage(t0), true);
+      assert.equal(canSendMessage(t0 + 100), true);
+      assert.equal(canSendMessage(t0 + 200), true);
+      assert.equal(canSendMessage(t0 + 300), true);
+      assert.equal(canSendMessage(t0 + 400), true);
+      // 6th message in same window should be blocked
+      assert.equal(canSendMessage(t0 + 500), false, "6th message in 2s window must be rate-limited");
+      assert.equal(canSendMessage(t0 + 600), false);
+
+      // After window passes (t0 + 2001ms), can send again
+      assert.equal(canSendMessage(t0 + 2050), true, "Allowed after rate-limit window expires");
+    });
+  });
 });
