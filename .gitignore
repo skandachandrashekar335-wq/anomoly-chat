@@ -1,0 +1,19 @@
+# Dependencies
+node_modules/
+dist/
+
+# Runtime
+*.env*
+
+# Logs
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Performance
+.ds_store
+.DS_Store

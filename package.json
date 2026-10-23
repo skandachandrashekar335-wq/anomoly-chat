@@ -1,0 +1,38 @@
+{
+  "name": "anomoly-chat",
+  "version": "1.0.0",
+  "description": "Anonymous. Encrypted. Temporary. Private text conversations without accounts or contact details.",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build && node --test dist/index.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/skandachandrashekar335-wq/anomoly-chat.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/skandachandrashekar335-wq/anomoly-chat/issues"
+  },
+  "homepage": "https://github.com/skandachandrashekar335-wq/anomoly-chat#readme",
+  "dependencies": {
+    "express": "^5.3.0",
+    "qrcode": "^1.5.4",
+    "typescript": "^7.0.2",
+    "ws": "^8.22.0"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.6",
+    "@types/node": "^26.6.5",
+    "@types/qrcode": "^1.5.6",
+    "@types/ws": "^8.18.2",
+    "puppeteer-core": "^25.16.0"
+  }
+}
