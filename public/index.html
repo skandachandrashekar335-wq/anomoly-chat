@@ -2541,7 +2541,7 @@
               </svg>
             </button>
             <div class="faq-answer">
-              Our 6-character room codes are generated from an alphabet of 58 non-ambiguous characters, producing over 38 billion possible combinations. In combination with connection rate limits, brute-force guessing of active rooms is computationally infeasible.
+              Room codes are six characters and avoid visually ambiguous symbols. They are not a substitute for strong authentication, and the browser-first design cannot guarantee server-side rate limiting against a malicious client. Share invitation links only with people you intend to invite.
             </div>
           </div>
 
@@ -2553,7 +2553,7 @@
               </svg>
             </button>
             <div class="faq-answer">
-              The timer resets back to 5 minutes whenever any participant in the room sends a valid message. As long as you keep chatting, the room remains active. The moment all participants stop messaging for 5 minutes, the room self-destructs.
+              The default lifetime is 5 minutes, but the creator can choose 5, 10, 15, 20, or a custom 1–60 minute lifetime. The countdown is an absolute expiry and does not reset when messages are sent. The creator can extend an active room, subject to the four-hour total limit.
             </div>
           </div>
 
@@ -2565,7 +2565,7 @@
               </svg>
             </button>
             <div class="faq-answer">
-              No. Anomoly Chat is intentionally text-only with a 500-character cap. This guarantees minimal memory overhead, zero storage vulnerabilities, and prevents any malicious file distribution.
+              Yes, supported document formats can be transferred directly between connected peers, up to 10 MiB per file. The app checks the filename extension and verifies a SHA-256 digest, but it does not scan documents for malware. Only accept files from people you trust.
             </div>
           </div>
 
@@ -2577,7 +2577,7 @@
               </svg>
             </button>
             <div class="faq-answer">
-              Your browser unbinds its WebSocket connection. However, the room remains alive on the server until its 5-minute inactivity TTL expires. If you have the room code or saved the invite link, you can rejoin before it expires.
+              The creator's browser acts as the room authority. If the creator closes the tab or loses connectivity, the room may end for everyone. Refreshing or reconnecting is not guaranteed to restore a room; use a fresh invitation and test the actual connection state.
             </div>
           </div>
         </div>
