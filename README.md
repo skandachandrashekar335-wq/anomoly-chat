@@ -1,148 +1,154 @@
 # Anomoly Chat
 
-> **Anonymous. Temporary. Browser-to-Browser Text Chat.**
-> No user accounts, no phone numbers or email registration, no message database, and no persistent server.
+<p align="center">
+  <strong>Temporary, accountless chat — directly between browsers.</strong><br />
+  Text and document sharing over WebRTC, with rooms that expire.
+</p>
 
-**Live Production URL:** [https://anomoly-chat.vercel.app](https://anomoly-chat.vercel.app)
-
----
-
-## 🌟 Key Architecture Decisions
-
-Anomoly Chat has migrated from an always-on persistent server to a **browser-first, serverless WebRTC peer-to-peer architecture** hosted on Vercel:
-
-1. **Browser-to-Browser WebRTC DataChannels**:
-   - Chat messages travel **directly between devices** via WebRTC DataChannels (`RTCDataChannel`).
-   - Transport encryption is enforced at the network protocol layer using standard WebRTC DTLS/SRTP cryptography.
-   - Zero database writes, zero server disk storage, zero message logs.
-2. **Static Vercel Deployment**:
-   - The entire application runs as static assets hosted globally on Vercel's Edge CDN.
-   - Instant loading, zero cold-starts, zero server maintenance costs.
-3. **P2P Binary Document Sharing (Up to 10 MiB)**:
-   - Participants can share PDF, Word, Excel, PowerPoint, Text, RTF, and OpenDocument formats directly over WebRTC DataChannels.
-   - Files are sliced into **16 KiB binary chunks** transferred via `ArrayBuffer` without Base64 inflation.
-   - **Backpressure Management**: Prevents buffer saturation on slow networks by monitoring `bufferedAmount` and yielding to the event loop.
-   - **SHA-256 Integrity Verification**: Sender computes cryptographic digest (`crypto.subtle.digest`); recipient verifies full payload bit-for-bit before generating an in-memory download link.
-   - **Zero Persistence**: Files exist strictly in transient browser RAM as ephemeral Object URLs and are immediately revoked when leaving the room.
-4. **Creator-Controlled Room Expiry Extension**:
-   - The room creator (Host) has exclusive privilege to add time to active rooms (+5m, +10m, +15m, +20m presets or custom 1–60m).
-   - Authoritative Host-only extension: guests cannot alter room duration; guest clients reject extension messages unless sent by the verified Host.
-   - **Real-Time Synchronization**: Countdown timer updates synchronously across all connected peers without requiring page reloads.
-   - **4-Hour Maximum Lifetime**: Absolute ceiling of 4 hours from creation prevents runaway lingering rooms. Expired rooms cannot be resurrected.
-5. **Dynamic Room Expiry (Absolute Lifetime)**:
-   - The room creator chooses the room's lifespan before creating it:
-     - **5 minutes** (Default)
-     - **10 minutes**
-     - **15 minutes**
-     - **20 minutes**
-     - **Custom duration** (1 to 60 minutes)
-   - Expiration is an **absolute lifetime** synchronized between all peers via session metadata. Joining or sending messages does not reset the room's absolute destruction time.
-   - When expired: all WebRTC connections sever, input controls lock, and memory is wiped clean.
-6. **Client-Side Offline QR Codes**:
-   - Scannable QR codes are generated directly in the browser via `qrcode.min.js`.
-   - Zero network requests or backend image generation endpoints required.
-7. **Session Key in URL Hash (`#key=...&exp=...`)**:
-   - Cryptographic session secrets and absolute expiration timestamps are passed in the URL fragment (`#hash`).
-   - Browsers **never send URL fragments in HTTP request headers or referrers**, protecting session credentials from intermediate network observers.
+<p align="center">
+  <a href="https://anomoly-chat.vercel.app"><strong>Open the live app</strong></a> ·
+  <a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/actions"><strong>CI / test runs</strong></a> ·
+  <a href="LICENSE"><strong>Apache-2.0 License</strong></a> ·
+  <a href="SECURITY.md"><strong>Security & privacy</strong></a>
+</p>
 
 ---
 
-## 🌐 Networking & Signaling: The Honest Truth
+## At a glance
 
-WebRTC requires **signaling** to exchange connection metadata (ICE candidates and session descriptions) before two browsers can establish a direct peer-to-peer connection:
+- **No registration:** no account, phone number, or email is required.
+- **Peer-to-peer chat:** messages use WebRTC data channels after connection setup.
+- **Temporary rooms:** choose 5, 10, 15, 20 minutes, or a custom lifetime of 1–60 minutes.
+- **Creator-controlled extensions:** the room creator can add time while a room is active, within a four-hour total lifetime ceiling.
+- **Document transfer:** share allowlisted PDF, Word, PowerPoint, Excel, text, RTF, and OpenDocument files up to **10 MiB**.
+- **Integrity check:** received documents are checked against a SHA-256 digest before the download action is enabled.
+- **QR invitations:** QR codes are generated in the browser.
+- **Responsive UI:** designed for desktop, tablet, and mobile.
+- **Static hosting:** the frontend is deployed on Vercel; the project does not run its own always-on chat server.
 
-- **Signaling Mechanism**: Handled via the public PeerJS cloud signaling infrastructure (`0.peerjs.com`) over secure WebSockets (`wss:`). The signaling server only brokers the initial handshake; it never receives, relays, or stores chat messages once the direct DataChannel opens.
-- **NAT Traversal (STUN)**: Public Google STUN servers (`stun:stun.l.google.com:19302`) allow peers to discover their public IP and port mappings.
-- **Firewall & Symmetric NAT Limitations (TURN)**: Direct P2P hole-punching works across most residential networks. However, restrictive enterprise firewalls, cellular carrier-grade NATs (CGNAT), or symmetric NATs require a TURN relay server to route traffic when direct connections fail. If a direct P2P connection cannot be established within 12 seconds, Anomoly Chat displays a transparent notification banner explaining the NAT/firewall constraint.
+> **Privacy note:** “anonymous” means no account or contact details are requested. It does not mean untraceable. See [Security & privacy](SECURITY.md) for the actual data flow and limitations.
 
----
+## Live app
 
-## 🔒 Privacy & Security Analysis
+**https://anomoly-chat.vercel.app**
 
-- **No User Registration**: Anyone can create or join a room with a 6-character code. No credentials, cookies, or tracking pixels exist.
-- **Transport Security**: Direct WebRTC DataChannels are encrypted by standard DTLS (Datagram Transport Layer Security).
-- **XSS Protection**: All incoming messages are inserted into the DOM strictly via `.textContent = text` on safe `<div>` elements. Raw HTML or script tags cannot execute.
-- **Rate Limiting**: Client-side sliding-window rate limiting prevents flooding (maximum 5 messages per 2-second window).
-- **Privacy Limitations**:
-  - WebRTC peer-to-peer connections expose peers' public IP addresses to each other to establish direct UDP sockets.
-  - The signaling server observes public IP addresses and peer connection timings during the initial handshake.
-  - Anomoly Chat provides **ephemeral, accountless anonymity**, not complete untraceability.
+To try it:
+1. Open the live app in one browser and create a room.
+2. Share the invitation link or QR code with a second browser/device.
+3. Send a text message to check the connection.
+4. Use the attachment button to transfer a supported document (up to 10 MiB), then download it on the receiving device.
+5. As the room creator, click the countdown to extend an active room.
 
----
+Peer-to-peer connectivity depends on the networks involved. Some restrictive networks require a TURN relay, which is not currently bundled as a guaranteed fallback.
 
-## 🛠️ Tech Stack
+## How it works
 
-- **Frontend**: Vanilla HTML5, CSS3 (Neumorphism / Soft UI), Vanilla JavaScript (ES2022)
-- **Peer-to-Peer**: WebRTC DataChannel & `peerjs` (bundled static 85KB)
-- **Offline QR**: `qrcode` (bundled static 24KB)
-- **Hosting**: Vercel Static Hosting (`vercel.json`)
-- **Local Dev Server**: Node.js & Express 5 (optional for local testing)
-- **Test Runner**: Node.js built-in test suite (`node:test`)
-
----
-
-## 🚀 Quick Start & Local Development
-
-### 1. Install Dependencies
-```bash
-npm install
+```text
+Browser A ── secure signaling handshake ── PeerJS signaling service
+    │                                         │
+    └──────── direct WebRTC data channel ─────┘
+                         │
+                      Browser B
 ```
 
-### 2. Run Tests
-```bash
-# Typecheck TypeScript files
-npm run typecheck
+1. **Static frontend:** Vercel serves the HTML, CSS, JavaScript, and bundled client libraries.
+2. **Signaling:** PeerJS's public signaling service helps browsers exchange the connection information needed to start WebRTC.
+3. **Chat and files:** once the data channel is established, text and document chunks travel peer-to-peer when the network allows a direct connection.
+4. **No app file store:** the application does not upload document contents to its own storage service. Received file data is held temporarily in browser memory for integrity checking and download.
+5. **QR codes:** generated locally in the browser.
 
-# Run test suite (25 automated unit & protocol tests)
+WebRTC encrypts data in transit. The signaling service still sees connection metadata, and direct peer-to-peer networking can expose peers' public IP addresses to each other. A TURN relay, if added in the future, would relay traffic for connections that cannot be established directly.
+
+## Features
+
+### Temporary rooms
+- Six-character room codes and shareable invitations.
+- Default room lifetime: **5 minutes**.
+- Presets: **5, 10, 15, and 20 minutes**; custom initial lifetime: **1–60 minutes**.
+- Countdown synchronized between connected peers.
+- Creator-only extensions: **+5, +10, +15, +20 minutes**, or custom **1–60 minutes**.
+- Maximum total room lifetime: **4 hours from creation**.
+- Expired rooms lock the UI and close active connections.
+
+**Architecture limitation:** this is a browser-first design, not a trusted server-enforced room service. The creator's browser acts as the room authority; if the creator closes the tab or loses connectivity, the session can end. A modified/malicious client can bypass client-side rules. Do not use this design for regulated, high-risk, or adversarial communications.
+
+### Text messaging
+- Real-time messages over WebRTC data channels.
+- Safe DOM text rendering to avoid treating user messages as HTML.
+- Message length and basic rate controls.
+
+### Document sharing
+- Supported extensions: `.pdf`, `.doc`, `.docx`, `.txt`, `.rtf`, `.ppt`, `.pptx`, `.xls`, `.xlsx`, `.odt`, `.ods`, `.odp`.
+- Maximum size: **10 MiB (10,485,760 bytes)** per file; empty and oversized files are rejected.
+- Binary transfer in **16 KiB chunks**; no Base64 expansion.
+- Backpressure handling to avoid overwhelming the data channel.
+- SHA-256 integrity verification before a completed download is offered.
+- No intentional persistence to localStorage, IndexedDB, Cache Storage, or an application file database.
+- Temporary buffers and Blob URLs are cleared when transfer/session cleanup runs.
+
+The extension allowlist is not malware scanning. Only download documents from people you trust. The app cannot control all browser/OS memory behavior or the recipient's normal download destination.
+
+## Run locally
+
+Requirements: Node.js 22 or newer and npm.
+
+```bash
+git clone https://github.com/skandachandrashekar335-wq/anomoly-chat.git
+cd anomoly-chat
+npm ci
+npm run typecheck
 npm test
 ```
 
-### 3. Local Development Server
+The test command compiles TypeScript and runs the Node.js built-in test runner.
+
+For the optional local Express development server:
+
 ```bash
-# Start local development server on http://localhost:3000
 npm start
 ```
-Or open `index.html` with any local static HTTP server (e.g. `npx serve public` or `python3 -m http.server 3000`).
 
----
+The static frontend is also available from `index.html` and `public/index.html` using any local static HTTP server. Peer-to-peer features require internet access to reach the signaling service; opening a file directly with `file://` may not work as expected.
 
-## 🧪 Automated Test Suite
+## Quality checks and proof
 
-The project includes **40 automated tests** in `src/index.test.ts` across 9 distinct test suites:
+- Automated test source: [`src/index.test.ts`](src/index.test.ts)
+- GitHub Actions: [workflow runs](https://github.com/skandachandrashekar335-wq/anomoly-chat/actions)
+- Feature verification checklist and recorded test scope: [`docs/VERIFICATION.md`](docs/VERIFICATION.md)
+- Security and privacy notes: [`SECURITY.md`](SECURITY.md)
 
-- **Helper Functions**: 6-character code generation, ambiguous character avoidance (`0`, `O`, `I`, `l`), format validation.
-- **Validation & Rate Limiting**: Empty message rejection, 500-character cap, rapid-fire rate limiting.
-- **Dynamic Expiry Suite**:
-  - Correct duration calculation for presets: 5m, 10m, 15m, 20m.
-  - Strict boundary clamping for custom duration (1 to 60 minutes).
-  - Absolute expiration calculation (`expiresAt = createdAt + lifetimeMs`).
-  - Automatic detection and blocking of expired invitations (`now >= expiresAt`).
-- **WebRTC Protocol & Security**:
-  - Safe URL hash fragment parsing (`#key=...&exp=...`).
-  - XSS injection defense validation (verifying `.textContent` immunity against `<script>`, `onerror`, and HTML vectors).
-  - Sliding-window spam throttling.
-- **Feature 1 — Real Document Sharing Engine**:
-  - Rejection of empty 0-byte files.
-  - Strict 10 MiB upper limit enforcement (rejecting 10MB + 1 byte).
-  - Extension allowlist verification (.pdf, .doc, .docx, .txt, .rtf, .ppt, .pptx, .xls, .xlsx, .odt, .ods, .odp).
-  - Rejection of executable / scripting extensions (.exe, .sh, .bat, .js, .py, .html, etc.).
-  - Filename sanitization against directory traversal (`../`, `..\`) and injection characters.
-  - Filename capping at 100 characters with extension preservation.
-  - Accurate chunk count calculation for 16 KiB chunks.
-  - SHA-256 binary integrity verification on chunk reassembly.
-  - Detection of corrupted / tampered payloads during transmission.
-- **Feature 2 — Creator-Controlled Expiry Extension**:
-  - Host duration extensions with preset increments (+5m, +10m, +15m, +20m).
-  - Custom extensions strictly between 1 and 60 minutes.
-  - Expired room lockout enforcement (cannot extend an expired room).
-  - 4-hour maximum total room lifetime ceiling enforcement.
-  - Authoritative validation: Host ignores guest requests; Guests accept extensions only from the verified Host connection.
+The latest implementation report recorded **40 passing automated tests** and a two-browser WebRTC test for chat, a sample document transfer with SHA-256 verification, and a synchronized creator expiry extension. These are reported results, not a guarantee that every device/network combination will work. The GitHub Actions workflow provides a repeatable automated check for future changes; browser-network behavior still needs testing on real devices and networks.
 
----
+## Project structure
 
-## 📱 Browser & Viewport Verification
+```text
+.
+├── index.html                 # Main browser app
+├── public/
+│   ├── index.html             # Static deployment copy
+│   ├── peerjs.min.js          # PeerJS client bundle
+│   └── qrcode.min.js          # Client-side QR generation
+├── src/
+│   ├── index.ts               # Shared utilities and optional local server
+│   └── index.test.ts          # Automated tests
+├── docs/
+│   └── VERIFICATION.md        # Test evidence and manual release checklist
+├── .github/workflows/ci.yml   # Automated CI
+├── vercel.json                # Static deployment headers/config
+├── SECURITY.md
+└── LICENSE                    # Apache License 2.0
+```
 
-The user interface has been tested across all responsive viewports:
-- **Desktop (1440px & 1280px)**: Compact chat card (`height: min(700px, calc(100vh - 110px))`), natural column message flow, subtle hover lift on interactive cards.
-- **Tablet (768px)**: Flexible container scaling, accessible touch targets.
-- **Mobile (390px)**: Neumorphic hamburger navigation, touch-friendly composer fixed at viewport bottom, `100dvh` layout preventing keyboard clipping.
+## License
+
+This project is licensed under the **Apache License 2.0**. See [LICENSE](LICENSE).
+
+## Contributing
+
+Bug reports and improvements are welcome. Please:
+1. Reproduce the issue and include browser/OS/network details without sharing private room links or secrets.
+2. Run `npm run typecheck` and `npm test`.
+3. Test both desktop and mobile layouts for UI changes.
+4. Never commit credentials, session invitations, private files, or personal data.
+
+For security concerns, follow [SECURITY.md](SECURITY.md).
