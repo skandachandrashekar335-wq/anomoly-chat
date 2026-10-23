@@ -2073,13 +2073,13 @@
           <div class="hero-content">
             <div class="section-eyebrow">
               <span>✨</span>
-              <span>100% In-Memory • Zero History</span>
+              <span>Accountless • Temporary • Peer-to-Peer</span>
             </div>
             <h1 class="hero-headline">
-              Conversations that <span class="highlight">vanish</span> without a trace.
+              Temporary conversations, without creating an account.
             </h1>
             <p class="hero-copy">
-              Temporary, anonymous text chat rooms. No accounts, no phone numbers, no tracking cookies. Rooms and messages automatically self-destruct 5 minutes after the last message.
+              Create temporary rooms without an account, phone number, or email. Chat and share documents directly over WebRTC when your network permits; rooms have a chosen expiry.
             </p>
             <div class="hero-ctas">
               <button class="neu-btn neu-btn-primary" id="heroCreateBtn">
@@ -2141,17 +2141,17 @@
                 <div class="mockup-msg-time">Anonymous · 7:18 PM</div>
               </div>
               <div class="mockup-msg mockup-msg-out">
-                Yes! No accounts or server disk logs. Once we close this, the memory is wiped clean.
+                No account is needed. Still, network metadata is visible to relevant providers and a recipient can save anything they receive.
                 <div class="mockup-msg-time" style="color: rgba(255,255,255,0.85);">You · 7:19 PM</div>
               </div>
               <div class="mockup-msg mockup-msg-in">
-                Awesome. 100% ephemeral text.
+                Temporary chat, no registration.
                 <div class="mockup-msg-time">Anonymous · 7:19 PM</div>
               </div>
             </div>
             <div class="mockup-caption">
               <span>🔒</span>
-              <span>Sample Room Simulation • Real backend runs identically</span>
+              <span>Illustrative UI preview • Actual connections use WebRTC</span>
             </div>
           </div>
         </div>
@@ -2291,7 +2291,7 @@
             </div>
             <h3 class="feature-title">Temporary Rooms</h3>
             <p class="feature-text">
-              Rooms auto-expire after 5 minutes of inactivity. When TTL lapses, memory is reclaimed immediately and all connection references are expunged.
+              Rooms start with a 5-minute lifetime by default. The creator can choose 5, 10, 15, 20, or a custom 1–60 minutes, then extend an active room up to the 4-hour total limit.
             </p>
           </div>
 
@@ -2304,7 +2304,7 @@
             </div>
             <h3 class="feature-title">Zero Registration</h3>
             <p class="feature-text">
-              No email addresses, phone numbers, or passwords. No account database exists on our servers to ever be breached or leaked.
+              No registration is required. PeerJS signaling and network operators may still see connection metadata; peer-to-peer connections can expose participants' public IP addresses to each other.
             </p>
           </div>
 
@@ -2318,7 +2318,7 @@
             </div>
             <h3 class="feature-title">Text-Only Simplicity</h3>
             <p class="feature-text">
-              Strictly plain-text communication capped at 500 characters. No file uploads, executables, or media storage means no malware risks and minimal RAM overhead.
+              Send text messages and supported documents up to 10 MiB. Document extensions are allowlisted, but files are not malware-scanned; only download files from people you trust.
             </p>
           </div>
 
@@ -2375,7 +2375,7 @@
             <div class="step-number">3</div>
             <h3 class="step-title">Chat & Auto-Expire</h3>
             <p class="step-desc">
-              Messages broadcast instantly via WebSockets. After 5 minutes without messages, the room is permanently wiped.
+              Messages and document chunks use WebRTC data channels after a signaling handshake. Rooms expire at the configured absolute deadline; sending messages does not reset the timer.
             </p>
           </div>
         </div>
@@ -2407,7 +2407,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Creating a Room</h4>
-              <p>Click "Create Room". The server allocates a non-colliding 6-character room identifier in volatile RAM and links your WebSocket.</p>
+              <p>Click “Create Room” to start a temporary browser-led room. Share the invitation link or QR code so another browser can establish a peer connection.</p>
             </div>
           </div>
 
@@ -2432,7 +2432,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Sending Messages</h4>
-              <p>Press Enter to send, or Shift+Enter to create a new line. Messages are limited to 500 characters to prevent buffer bloat.</p>
+              <p>Press Enter to send a message, or Shift+Enter for a new line. Text is limited to 500 characters; supported documents can be transferred directly up to 10 MiB.</p>
             </div>
           </div>
 
@@ -2475,7 +2475,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Inactivity Expiry</h4>
-              <p>The 5-minute countdown refreshes on every new message sent. If no messages arrive for 5 minutes, the room is deleted instantly.</p>
+              <p>The countdown shows the room's absolute expiry. The creator can extend an active room; messages do not reset the expiry. Browser-only expiry is not tamper-proof against a malicious client.</p>
             </div>
           </div>
         </div>
@@ -2486,57 +2486,33 @@
     <section class="section" id="security" style="background: rgba(224, 229, 236, 0.4);">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>🛡️</span>
-            <span>Security Engineering</span>
-          </div>
+          <div class="section-eyebrow"><span>🛡️</span><span>Security Engineering</span></div>
           <h2 class="section-title">Privacy & Data Architecture</h2>
-          <p class="section-description">
-            Honest engineering facts about what our architecture does and does not do.
-          </p>
+          <p class="section-description">A clear explanation of what this browser-first design does—and does not—protect.</p>
         </div>
-
         <div class="security-box">
-          <h3>How We Protect Your Ephemeral State</h3>
+          <h3>How the connection works</h3>
           <div class="security-points-grid">
             <div class="security-point">
               <div class="security-point-icon">✓</div>
-              <div>
-                <h4>Pure In-Memory Storage (RAM)</h4>
-                <p>Rooms, sockets, and message queues live exclusively in Node.js volatile process heap (<code>Map&lt;string, Room&gt;</code>). Nothing is ever written to SQLite, PostgreSQL, MongoDB, or disk logs.</p>
-              </div>
+              <div><h4>Peer-to-peer after setup</h4><p>Vercel serves the static app. PeerJS's public signaling service helps browsers exchange connection metadata. Once a WebRTC data channel opens, chat messages and document chunks travel directly between peers when network conditions allow.</p></div>
             </div>
-
             <div class="security-point">
               <div class="security-point-icon">✓</div>
-              <div>
-                <h4>Server Crash & Restart Cleansing</h4>
-                <p>If the server process is restarted or machine powered down, 100% of room history and active connections cease to exist instantly. There is no backup recovery file.</p>
-              </div>
+              <div><h4>Encrypted transport</h4><p>WebRTC data channels use DTLS encryption in transit. This does not by itself verify a peer's real-world identity or make the system tamper-proof against a malicious participant.</p></div>
             </div>
-
             <div class="security-point">
               <div class="security-point-icon">✓</div>
-              <div>
-                <h4>Immediate Expiry Enforcement</h4>
-                <p>Rooms that exceed their 5-minute inactivity limit are purged immediately on the next message attempt, backed by an automated 30-second sweep timer.</p>
-              </div>
+              <div><h4>Temporary document handling</h4><p>Documents up to 10 MiB are transferred in binary chunks and checked with SHA-256 before download. The app does not intentionally upload files to its own storage or persist them in browser storage APIs.</p></div>
             </div>
-
             <div class="security-point">
               <div class="security-point-icon">✓</div>
-              <div>
-                <h4>Transport Encryption (WSS / TLS)</h4>
-                <p>In production deployment, all WebSocket frames and HTTP assets travel encrypted over TLS, shielding network traffic from local Wi-Fi sniffers and ISP inspection.</p>
-              </div>
+              <div><h4>Room lifetime controls</h4><p>Rooms have an absolute expiry, with creator-controlled extensions up to a four-hour total lifetime. Because room authority lives in a browser, these controls are not enforceable against a client that deliberately modifies its own code.</p></div>
             </div>
           </div>
-
           <div class="honest-crypto-banner">
             <div style="font-size: 1.3rem;">ℹ️</div>
-            <p>
-              <strong>Honest Cryptography Notice:</strong> Anomoly Chat is <em>not</em> an end-to-end encrypted (E2EE) protocol like Signal. The server mediates message delivery in plain text in server RAM before broadcasting to authorized peers. We do not make false claims of E2EE or absolute anonymity.
-            </p>
+            <p><strong>Privacy limits:</strong> Anomoly Chat does not require an account, but it is not untraceable. Signaling and network providers can observe connection metadata; direct WebRTC peers may learn each other's public IP addresses. Some networks require a TURN relay, which is not guaranteed by the current deployment. A recipient can keep any file they download, and browser/OS internals are outside the app's complete control. Do not use this as a substitute for audited secure messaging.</p>
           </div>
         </div>
       </div>
