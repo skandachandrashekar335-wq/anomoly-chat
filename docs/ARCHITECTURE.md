@@ -78,12 +78,12 @@ sequenceDiagram
     participant S as Sender (Browser A)
     participant R as Receiver (Browser B)
 
-    Note over S: 1. Validate size <= 10 MiB & ext in allowlist<br/>2. Read file as ArrayBuffer<br/>3. Compute SHA-256 (crypto.subtle)
+    Note over S: 1. Validate size up to 10 MiB and extension in allowlist<br/>2. Read file as ArrayBuffer<br/>3. Compute SHA-256 (crypto.subtle)
     S->>R: file_start { transferId, name, size, ext, totalChunks, sha256 }
     Note over R: Render pending document bubble with progress bar
 
     loop Sliced into 16 KiB Binary Chunks
-        Note over S: Check dataChannel.bufferedAmount <= 64KB<br/>Yield to event loop every 8 chunks
+        Note over S: Check dataChannel.bufferedAmount under 64 KiB<br/>Yield to event loop every 8 chunks
         S->>R: file_chunk { transferId, index, chunk: ArrayBuffer }
         Note over R: Store chunk in Uint8Array, update progress %
     end
@@ -119,13 +119,13 @@ sequenceDiagram
     alt Room Creator Extends Duration
         Host->>Host: Click countdown pill (creator-interactive)
         Host->>Host: Select preset (+10m) or custom (1-60m)
-        Note over Host: Validate: target <= roomCreatedAt + 4 hours
+        Note over Host: Validate: target within roomCreatedAt + 4 hours
         Host->>Guest: expiry_extension { newExpiresAt, extendedByMinutes }
         Note over Host,Guest: Countdown timers update in real time without page reload
     else Unauthorized Extension Attempt by Guest
         Guest->>Host: expiry_extension (simulated/tampered)
         Note over Host: Host rejects non-authoritative message<br/>Host is authoritative room authority
-    else Room Reaches 00:00 (Expiration)
+    else Room Reaches Expiration (00m 00s)
         Note over Host,Guest: 1. Sever all active WebRTC connections<br/>2. Revoke all active Blob URLs<br/>3. Wipe chat bubbles & memory<br/>4. Disable input controls
     end
 ```

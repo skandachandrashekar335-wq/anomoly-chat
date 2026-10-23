@@ -92,13 +92,13 @@ flowchart TD
         GuestUI["Neumorphism Chat UI<br/>• Binary Chunk Reassembly<br/>• SHA-256 Verifier & Blob Creator"]
     end
 
-    EdgeCDN -->|HTTP GET /| PeerA
-    EdgeCDN -->|HTTP GET /?room=...| PeerB
+    EdgeCDN -->|"HTTP GET /"| PeerA
+    EdgeCDN -->|"HTTP GET /?room=..."| PeerB
 
-    PeerA <-->|Secure WSS Handshake| PeerJSServer
-    PeerB <-->|Secure WSS Handshake| PeerJSServer
+    PeerA <-->|"Secure WSS Handshake"| PeerJSServer
+    PeerB <-->|"Secure WSS Handshake"| PeerJSServer
 
-    PeerA <===>|Direct WebRTC RTCDataChannel (DTLS / SRTP)<br/>Bidirectional Text Chat & 16 KiB Binary Document Chunks| PeerB
+    PeerA <===>|"Direct WebRTC RTCDataChannel (DTLS / SRTP)<br/>Bidirectional Text Chat & 16 KiB Binary Document Chunks"| PeerB
 ```
 
 For full sequence diagrams, protocol specifications, backpressure algorithms, and memory lifecycle details, see [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
