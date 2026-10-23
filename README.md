@@ -18,7 +18,18 @@ Anomoly Chat has migrated from an always-on persistent server to a **browser-fir
 2. **Static Vercel Deployment**:
    - The entire application runs as static assets hosted globally on Vercel's Edge CDN.
    - Instant loading, zero cold-starts, zero server maintenance costs.
-3. **Dynamic Room Expiry (Absolute Lifetime)**:
+3. **P2P Binary Document Sharing (Up to 10 MiB)**:
+   - Participants can share PDF, Word, Excel, PowerPoint, Text, RTF, and OpenDocument formats directly over WebRTC DataChannels.
+   - Files are sliced into **16 KiB binary chunks** transferred via `ArrayBuffer` without Base64 inflation.
+   - **Backpressure Management**: Prevents buffer saturation on slow networks by monitoring `bufferedAmount` and yielding to the event loop.
+   - **SHA-256 Integrity Verification**: Sender computes cryptographic digest (`crypto.subtle.digest`); recipient verifies full payload bit-for-bit before generating an in-memory download link.
+   - **Zero Persistence**: Files exist strictly in transient browser RAM as ephemeral Object URLs and are immediately revoked when leaving the room.
+4. **Creator-Controlled Room Expiry Extension**:
+   - The room creator (Host) has exclusive privilege to add time to active rooms (+5m, +10m, +15m, +20m presets or custom 1–60m).
+   - Authoritative Host-only extension: guests cannot alter room duration; guest clients reject extension messages unless sent by the verified Host.
+   - **Real-Time Synchronization**: Countdown timer updates synchronously across all connected peers without requiring page reloads.
+   - **4-Hour Maximum Lifetime**: Absolute ceiling of 4 hours from creation prevents runaway lingering rooms. Expired rooms cannot be resurrected.
+5. **Dynamic Room Expiry (Absolute Lifetime)**:
    - The room creator chooses the room's lifespan before creating it:
      - **5 minutes** (Default)
      - **10 minutes**
@@ -27,10 +38,10 @@ Anomoly Chat has migrated from an always-on persistent server to a **browser-fir
      - **Custom duration** (1 to 60 minutes)
    - Expiration is an **absolute lifetime** synchronized between all peers via session metadata. Joining or sending messages does not reset the room's absolute destruction time.
    - When expired: all WebRTC connections sever, input controls lock, and memory is wiped clean.
-4. **Client-Side Offline QR Codes**:
+6. **Client-Side Offline QR Codes**:
    - Scannable QR codes are generated directly in the browser via `qrcode.min.js`.
    - Zero network requests or backend image generation endpoints required.
-5. **Session Key in URL Hash (`#key=...&exp=...`)**:
+7. **Session Key in URL Hash (`#key=...&exp=...`)**:
    - Cryptographic session secrets and absolute expiration timestamps are passed in the URL fragment (`#hash`).
    - Browsers **never send URL fragments in HTTP request headers or referrers**, protecting session credentials from intermediate network observers.
 
@@ -97,7 +108,7 @@ Or open `index.html` with any local static HTTP server (e.g. `npx serve public` 
 
 ## 🧪 Automated Test Suite
 
-The project includes 25 automated tests in `src/index.test.ts`:
+The project includes **40 automated tests** in `src/index.test.ts` across 9 distinct test suites:
 
 - **Helper Functions**: 6-character code generation, ambiguous character avoidance (`0`, `O`, `I`, `l`), format validation.
 - **Validation & Rate Limiting**: Empty message rejection, 500-character cap, rapid-fire rate limiting.
@@ -110,6 +121,22 @@ The project includes 25 automated tests in `src/index.test.ts`:
   - Safe URL hash fragment parsing (`#key=...&exp=...`).
   - XSS injection defense validation (verifying `.textContent` immunity against `<script>`, `onerror`, and HTML vectors).
   - Sliding-window spam throttling.
+- **Feature 1 — Real Document Sharing Engine**:
+  - Rejection of empty 0-byte files.
+  - Strict 10 MiB upper limit enforcement (rejecting 10MB + 1 byte).
+  - Extension allowlist verification (.pdf, .doc, .docx, .txt, .rtf, .ppt, .pptx, .xls, .xlsx, .odt, .ods, .odp).
+  - Rejection of executable / scripting extensions (.exe, .sh, .bat, .js, .py, .html, etc.).
+  - Filename sanitization against directory traversal (`../`, `..\`) and injection characters.
+  - Filename capping at 100 characters with extension preservation.
+  - Accurate chunk count calculation for 16 KiB chunks.
+  - SHA-256 binary integrity verification on chunk reassembly.
+  - Detection of corrupted / tampered payloads during transmission.
+- **Feature 2 — Creator-Controlled Expiry Extension**:
+  - Host duration extensions with preset increments (+5m, +10m, +15m, +20m).
+  - Custom extensions strictly between 1 and 60 minutes.
+  - Expired room lockout enforcement (cannot extend an expired room).
+  - 4-hour maximum total room lifetime ceiling enforcement.
+  - Authoritative validation: Host ignores guest requests; Guests accept extensions only from the verified Host connection.
 
 ---
 

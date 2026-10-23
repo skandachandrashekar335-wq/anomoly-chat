@@ -11,6 +11,16 @@ import {
   sweepExpiredRooms,
   ROOM_TTL_MS,
   MAX_MESSAGE_LENGTH,
+  MAX_FILE_SIZE,
+  CHUNK_SIZE,
+  MAX_TOTAL_ROOM_LIFETIME_MS,
+  ALLOWED_EXTENSIONS,
+  sanitizeFilename,
+  validateDocument,
+  calculateTotalChunks,
+  calculateSha256,
+  calculateCreatorExtension,
+  validateExtensionAuthorization,
 } from "./index";
 
 function wait(ms: number) {
@@ -526,6 +536,214 @@ describe("Anomoly Chat Server Test Suite", () => {
 
       // After window passes (t0 + 2001ms), can send again
       assert.equal(canSendMessage(t0 + 2050), true, "Allowed after rate-limit window expires");
+    });
+  });
+
+  describe("Feature 1 — Real Document Sharing Engine (P2P WebRTC Chunks & SHA-256 Integrity)", () => {
+    it("rejects empty 0-byte files", () => {
+      const res = validateDocument("empty.pdf", 0);
+      assert.equal(res.valid, false);
+      assert.equal(res.error, "Cannot send empty file.");
+    });
+
+    it("accepts valid documents up to exactly 10 MiB limit", () => {
+      const exact10MB = 10 * 1024 * 1024;
+      const res = validateDocument("report.pdf", exact10MB);
+      assert.equal(res.valid, true);
+      assert.equal(res.ext, ".pdf");
+      assert.equal(res.sanitizedName, "report.pdf");
+    });
+
+    it("rejects documents exceeding 10 MiB limit by even 1 byte", () => {
+      const overLimit = 10 * 1024 * 1024 + 1;
+      const res = validateDocument("huge-dataset.xlsx", overLimit);
+      assert.equal(res.valid, false);
+      assert.equal(res.error, "File exceeds 10MB limit.");
+    });
+
+    it("permits all specified document formats in allowlist", () => {
+      const allowedSamples = [
+        "document.pdf",
+        "essay.doc",
+        "thesis.docx",
+        "notes.txt",
+        "rich.rtf",
+        "deck.ppt",
+        "slides.pptx",
+        "sheet.xls",
+        "financials.xlsx",
+        "open_doc.odt",
+        "open_sheet.ods",
+        "open_presentation.odp"
+      ];
+
+      for (const sample of allowedSamples) {
+        const res = validateDocument(sample, 50000);
+        assert.equal(res.valid, true, `Should accept valid extension: ${sample}`);
+      }
+    });
+
+    it("strictly blocks untrusted or executable file extensions", () => {
+      const forbiddenSamples = [
+        "malware.exe",
+        "script.sh",
+        "command.bat",
+        "exploit.js",
+        "payload.py",
+        "page.html",
+        "style.css",
+        "archive.zip",
+        "image.png",
+        "binary.bin"
+      ];
+
+      for (const sample of forbiddenSamples) {
+        const res = validateDocument(sample, 50000);
+        assert.equal(res.valid, false, `Should reject forbidden extension: ${sample}`);
+        assert.ok(res.error?.includes("Unsupported file extension"));
+      }
+    });
+
+    it("sanitizes filenames: strips path traversal (../, ..\\) and dangerous injection characters", () => {
+      assert.equal(sanitizeFilename("../../../etc/passwd.pdf"), "passwd.pdf");
+      assert.equal(sanitizeFilename("C:\\Users\\admin\\secrets.docx"), "secrets.docx");
+      assert.equal(sanitizeFilename("<script>alert('xss').txt"), "_script_alert('xss').txt");
+      assert.equal(sanitizeFilename("project;drop table;.pdf"), "project_drop table_.pdf");
+      assert.equal(sanitizeFilename("   spaced_name.pdf   "), "spaced_name.pdf");
+    });
+
+    it("caps oversized filenames to 100 chars while preserving file extension", () => {
+      const veryLong = "a".repeat(150) + ".pdf";
+      const sanitized = sanitizeFilename(veryLong);
+      assert.ok(sanitized.length <= 100);
+      assert.ok(sanitized.endsWith(".pdf"));
+    });
+
+    it("accurately calculates chunk boundaries for 16 KiB chunks", () => {
+      // 0 bytes -> 0 chunks
+      assert.equal(calculateTotalChunks(0), 0);
+      // 16384 bytes -> 1 chunk
+      assert.equal(calculateTotalChunks(16384), 1);
+      // 16385 bytes -> 2 chunks
+      assert.equal(calculateTotalChunks(16385), 2);
+      // 10 MiB (10485760 bytes) -> 640 chunks of 16 KiB
+      assert.equal(calculateTotalChunks(10 * 1024 * 1024), 640);
+    });
+
+    it("computes SHA-256 and verifies binary reassembly matches original payload", () => {
+      const payload = Buffer.from("Anomoly Chat Test Document Payload with Binary Data — " + "X".repeat(50000));
+      const senderHash = calculateSha256(payload);
+
+      // Simulate chunking
+      const chunks: Buffer[] = [];
+      const totalChunks = calculateTotalChunks(payload.length, CHUNK_SIZE);
+      for (let i = 0; i < totalChunks; i++) {
+        const start = i * CHUNK_SIZE;
+        const end = Math.min(start + CHUNK_SIZE, payload.length);
+        chunks.push(payload.subarray(start, end));
+      }
+
+      assert.equal(chunks.length, totalChunks);
+
+      // Simulate recipient reassembly
+      const assembled = Buffer.concat(chunks);
+      const receiverHash = calculateSha256(assembled);
+
+      assert.equal(receiverHash, senderHash, "Reassembled payload SHA-256 must match original sender hash");
+      assert.equal(assembled.length, payload.length);
+    });
+
+    it("detects corrupted/tampered chunks during transmission via SHA-256 mismatch", () => {
+      const originalPayload = Buffer.from("Secret document content to be transferred.");
+      const expectedHash = calculateSha256(originalPayload);
+
+      // Corrupt 1 byte in transmission
+      const corruptedPayload = Buffer.from(originalPayload);
+      corruptedPayload[0] = corruptedPayload[0] ^ 0xff;
+      const corruptedHash = calculateSha256(corruptedPayload);
+
+      assert.notEqual(corruptedHash, expectedHash, "Corrupted payload must result in a different SHA-256 hash");
+    });
+  });
+
+  describe("Feature 2 — Creator-Controlled Room Expiry Extension Suite", () => {
+    it("allows Host to extend active room lifetime with preset increments (+5m, +10m, +15m, +20m)", () => {
+      const now = 1000000;
+      const createdAt = now;
+      const initialExpiresAt = now + 5 * 60 * 1000; // 5 min initial
+
+      for (const extMin of [5, 10, 15, 20]) {
+        const res = calculateCreatorExtension(createdAt, initialExpiresAt, extMin, now);
+        assert.equal(res.valid, true);
+        assert.equal(res.newExpiresAt, initialExpiresAt + extMin * 60 * 1000);
+        assert.equal(res.effectiveMinutes, extMin);
+      }
+    });
+
+    it("supports custom extension durations strictly between 1 and 60 minutes", () => {
+      const now = 1000000;
+      const createdAt = now;
+      const initialExpiresAt = now + 10 * 60 * 1000;
+
+      // 1 minute extension
+      const res1 = calculateCreatorExtension(createdAt, initialExpiresAt, 1, now);
+      assert.equal(res1.valid, true);
+      assert.equal(res1.effectiveMinutes, 1);
+
+      // 60 minutes extension
+      const res60 = calculateCreatorExtension(createdAt, initialExpiresAt, 60, now);
+      assert.equal(res60.valid, true);
+      assert.equal(res60.effectiveMinutes, 60);
+
+      // 0 or negative extension should be rejected
+      const res0 = calculateCreatorExtension(createdAt, initialExpiresAt, 0, now);
+      assert.equal(res0.valid, false);
+
+      // > 60 minutes in a single extension should be rejected
+      const res61 = calculateCreatorExtension(createdAt, initialExpiresAt, 61, now);
+      assert.equal(res61.valid, false);
+    });
+
+    it("strictly prevents extending an already expired room (lockout)", () => {
+      const createdAt = 1000000;
+      const expiresAt = 1300000;
+      const nowExpired = 1300001; // 1 ms after expiry
+
+      const res = calculateCreatorExtension(createdAt, expiresAt, 10, nowExpired);
+      assert.equal(res.valid, false);
+      assert.equal(res.error, "Room has already expired.");
+    });
+
+    it("enforces 4-hour maximum total room lifetime ceiling from room creation", () => {
+      const createdAt = 1000000;
+      const fourHoursMs = 4 * 60 * 60 * 1000; // 14,400,000 ms
+      // Suppose room has already been extended to 3 hours 50 mins (230 mins)
+      const currentExpiresAt = createdAt + 230 * 60 * 1000;
+      const now = createdAt + 200 * 60 * 1000;
+
+      // Requesting +20 mins should cap at +10 mins (hitting the 240 mins / 4h boundary)
+      const res = calculateCreatorExtension(createdAt, currentExpiresAt, 20, now);
+      assert.equal(res.valid, true);
+      assert.equal(res.newExpiresAt, createdAt + fourHoursMs);
+      assert.equal(res.effectiveMinutes, 10, "Extension must be capped at 4-hour lifetime ceiling");
+
+      // Once room is already at the 4-hour maximum, further extension attempts are rejected
+      const atMaxExpiresAt = createdAt + fourHoursMs;
+      const resMax = calculateCreatorExtension(createdAt, atMaxExpiresAt, 5, now);
+      assert.equal(resMax.valid, false);
+      assert.equal(resMax.error, "Maximum total room lifetime (4 hours) reached.");
+    });
+
+    it("authoritatively validates extension requests: Host ignores guests, Guest accepts only Host", () => {
+      // Host receives expiry extension message from another client -> Unauthorized
+      assert.equal(validateExtensionAuthorization(true, false), false);
+      assert.equal(validateExtensionAuthorization(true, true), false);
+
+      // Guest receives expiry extension from Host -> Authorized
+      assert.equal(validateExtensionAuthorization(false, true), true);
+
+      // Guest receives expiry extension from another guest / fake connection -> Unauthorized
+      assert.equal(validateExtensionAuthorization(false, false), false);
     });
   });
 });

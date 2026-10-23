@@ -29,6 +29,28 @@ export const MAX_MESSAGES_PER_WINDOW = 5;
 // Alphanumeric characters excluding visually ambiguous ones: 0, O, I, l
 export const SAFE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
 
+// ----- Document Sharing & Expiry Extension Constants -------------------------
+export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MiB strictly enforced
+export const CHUNK_SIZE = 16384;               // 16 KiB chunks
+export const MAX_TOTAL_ROOM_LIFETIME_MS = 4 * 60 * 60 * 1000; // 4 hours maximum lifetime ceiling
+
+export const ALLOWED_EXTENSIONS = [
+  ".pdf",
+  ".doc",
+  ".docx",
+  ".txt",
+  ".rtf",
+  ".ppt",
+  ".pptx",
+  ".xls",
+  ".xlsx",
+  ".odt",
+  ".ods",
+  ".odp"
+] as const;
+
+export type AllowedExtension = typeof ALLOWED_EXTENSIONS[number];
+
 // ----- Types -----------------------------------------------------------------
 
 export interface Message {
@@ -131,6 +153,95 @@ function sendParticipantCount(roomCode: string): void {
     code: roomCode,
     participantCount: count,
   });
+}
+
+// ----- Document Sharing & Expiry Extension Engine Helpers --------------------
+
+export function sanitizeFilename(filename: string): string {
+  if (!filename || typeof filename !== "string") return "document";
+  let clean = filename.replace(/^.*[\\\/]/, "");
+  clean = clean.replace(/[\x00-\x1F\x7F]/g, "");
+  clean = clean.replace(/[<>:"/\\|?*#;`$]/g, "_");
+  clean = clean.trim().replace(/^\.+/, "").replace(/\.+$/, "");
+  if (!clean) clean = "document";
+  if (clean.length > 100) {
+    const extIdx = clean.lastIndexOf(".");
+    if (extIdx > 0 && extIdx > clean.length - 15) {
+      clean = clean.slice(0, 85) + clean.slice(extIdx);
+    } else {
+      clean = clean.slice(0, 100);
+    }
+  }
+  return clean;
+}
+
+export function validateDocument(
+  filename: string,
+  size: number
+): { valid: boolean; error?: string; ext?: string; sanitizedName?: string } {
+  if (typeof size !== "number" || isNaN(size) || size <= 0) {
+    return { valid: false, error: "Cannot send empty file." };
+  }
+  if (size > MAX_FILE_SIZE) {
+    return { valid: false, error: "File exceeds 10MB limit." };
+  }
+
+  const sanitized = sanitizeFilename(filename);
+  const extIdx = sanitized.lastIndexOf(".");
+  const ext = extIdx !== -1 ? sanitized.slice(extIdx).toLowerCase() : "";
+
+  if (!ALLOWED_EXTENSIONS.includes(ext as any)) {
+    return {
+      valid: false,
+      error: `Unsupported file extension (${ext || "none"}).`,
+    };
+  }
+
+  return { valid: true, ext, sanitizedName: sanitized };
+}
+
+export function calculateTotalChunks(fileSize: number, chunkSize: number = CHUNK_SIZE): number {
+  if (fileSize <= 0) return 0;
+  return Math.ceil(fileSize / chunkSize);
+}
+
+export function calculateSha256(buffer: Buffer | Uint8Array): string {
+  return crypto.createHash("sha256").update(buffer).digest("hex");
+}
+
+export function calculateCreatorExtension(
+  roomCreatedAt: number,
+  currentExpiresAt: number,
+  extensionMinutes: number,
+  now: number = Date.now()
+): { valid: boolean; newExpiresAt: number; effectiveMinutes: number; error?: string } {
+  if (now >= currentExpiresAt) {
+    return { valid: false, newExpiresAt: currentExpiresAt, effectiveMinutes: 0, error: "Room has already expired." };
+  }
+  if (typeof extensionMinutes !== "number" || isNaN(extensionMinutes) || extensionMinutes < 1 || extensionMinutes > 60) {
+    return { valid: false, newExpiresAt: currentExpiresAt, effectiveMinutes: 0, error: "Extension minutes must be between 1 and 60." };
+  }
+
+  const target = currentExpiresAt + extensionMinutes * 60 * 1000;
+  const maxCeiling = roomCreatedAt + MAX_TOTAL_ROOM_LIFETIME_MS;
+  const cappedExpiresAt = Math.min(target, maxCeiling);
+  const effectiveMinutes = Math.floor((cappedExpiresAt - currentExpiresAt) / 60000);
+
+  if (effectiveMinutes <= 0) {
+    return { valid: false, newExpiresAt: currentExpiresAt, effectiveMinutes: 0, error: "Maximum total room lifetime (4 hours) reached." };
+  }
+
+  return { valid: true, newExpiresAt: cappedExpiresAt, effectiveMinutes };
+}
+
+export function validateExtensionAuthorization(
+  isHost: boolean,
+  isSenderHostConnection: boolean
+): boolean {
+  // If Host receives expiry extension message from another client, it is unauthorized
+  if (isHost) return false;
+  // If Guest receives expiry extension message, it is valid ONLY if sent by the host connection
+  return isSenderHostConnection;
 }
 
 // ----- Server Application Setup ----------------------------------------------

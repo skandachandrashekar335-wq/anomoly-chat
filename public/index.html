@@ -1422,6 +1422,385 @@
     }
 
     /* ==========================================================================
+       DOCUMENT ATTACHMENT & FILE TRANSFER (P2P WEBRTC)
+       ========================================================================== */
+
+    .composer-attach-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      background: var(--bg);
+      border: none;
+      box-shadow: var(--neu-btn);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .composer-attach-btn:hover {
+      color: var(--accent);
+      box-shadow: var(--neu-btn-hover);
+      transform: translateY(-1px);
+    }
+
+    .composer-attach-btn:active {
+      box-shadow: var(--neu-btn-pressed);
+      transform: translateY(1px);
+    }
+
+    .composer-attach-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Attachment Preview Bar above Composer Input */
+    .attachment-preview-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      padding: 0.6rem 0.9rem;
+      margin-bottom: 0.65rem;
+      background: var(--bg);
+      border-radius: 14px;
+      box-shadow: var(--neu-flat-sm);
+      border: 1px solid rgba(108, 99, 255, 0.25);
+      animation: bubbleFadeIn 0.2s ease-out;
+    }
+
+    .attachment-preview-info {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+
+    .attachment-type-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 6px;
+      background: var(--accent);
+      color: #ffffff;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .attachment-details {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .attachment-file-name {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .attachment-file-size {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .attachment-cancel-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--bg);
+      border: none;
+      box-shadow: var(--neu-flat-sm);
+      font-size: 1.15rem;
+      line-height: 1;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s ease;
+    }
+
+    .attachment-cancel-btn:hover {
+      color: var(--error);
+      box-shadow: var(--neu-btn-hover);
+    }
+
+    /* Document Message Bubble Card */
+    .chat-bubble.doc-bubble {
+      min-width: min(300px, 85vw);
+      max-width: min(420px, 88vw);
+      padding: 0.95rem 1.15rem;
+    }
+
+    .doc-card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 0.65rem;
+    }
+
+    .doc-icon-badge {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      background: var(--bg);
+      box-shadow: var(--neu-flat-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+
+    .chat-bubble.sent .doc-icon-badge {
+      background: rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+      box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
+    }
+
+    .doc-info {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .doc-name {
+      font-size: 0.92rem;
+      font-weight: 700;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: block;
+    }
+
+    .doc-size {
+      font-size: 0.75rem;
+      opacity: 0.85;
+      display: block;
+      margin-top: 0.15rem;
+    }
+
+    .doc-progress-container {
+      margin: 0.5rem 0 0.35rem;
+    }
+
+    .doc-progress-bar-bg {
+      width: 100%;
+      height: 6px;
+      background: rgba(0, 0, 0, 0.08);
+      border-radius: 999px;
+      overflow: hidden;
+      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
+    }
+
+    .chat-bubble.sent .doc-progress-bar-bg {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    .doc-progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--accent);
+      border-radius: 999px;
+      transition: width 0.15s ease-out;
+    }
+
+    .chat-bubble.sent .doc-progress-bar-fill {
+      background: #ffffff;
+    }
+
+    .doc-status-text {
+      font-size: 0.75rem;
+      margin-top: 0.35rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      opacity: 0.9;
+    }
+
+    .doc-cancel-link {
+      background: none;
+      border: none;
+      color: inherit;
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.75rem;
+      padding: 0;
+      opacity: 0.85;
+    }
+
+    .doc-cancel-link:hover {
+      opacity: 1;
+      color: var(--error);
+    }
+
+    .chat-bubble.sent .doc-cancel-link:hover {
+      color: #ffcccc;
+    }
+
+    .doc-actions {
+      margin-top: 0.75rem;
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+
+    .doc-download-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.45rem;
+      text-decoration: none;
+      font-size: 0.82rem;
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+    }
+
+    .doc-verify-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.72rem;
+      color: var(--success);
+      font-weight: 600;
+    }
+
+    .chat-bubble.sent .doc-verify-badge {
+      color: rgba(255, 255, 255, 0.95);
+    }
+
+    /* ==========================================================================
+       CREATOR ROOM EXPIRY EXTENSION POPOVER
+       ========================================================================== */
+
+    .status-pill.timer.creator-interactive {
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+    }
+
+    .status-pill.timer.creator-interactive:hover {
+      box-shadow: var(--neu-btn-hover);
+      color: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    .status-pill.timer.creator-interactive:active {
+      box-shadow: var(--neu-btn-pressed);
+      transform: translateY(1px);
+    }
+
+    .expiry-popover {
+      position: absolute;
+      top: 62px;
+      right: 1.5rem;
+      z-index: 100;
+      width: 310px;
+      max-width: calc(100vw - 2.5rem);
+      background: var(--bg);
+      border-radius: 20px;
+      box-shadow: var(--neu-flat-lg);
+      padding: 1.25rem;
+      border: 1px solid var(--border-subtle);
+      animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes popoverFadeIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .expiry-popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 0.65rem;
+    }
+
+    .expiry-popover-header h4 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .expiry-popover-close {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      line-height: 1;
+      padding: 0;
+    }
+
+    .expiry-popover-close:hover {
+      color: var(--text-primary);
+    }
+
+    .expiry-ext-presets {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 0.35rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .expiry-ext-pill {
+      padding: 0.4rem 0.15rem;
+      background: var(--bg);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      box-shadow: var(--neu-flat-sm);
+      font-family: var(--font-heading);
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .expiry-ext-pill:hover {
+      color: var(--accent);
+      box-shadow: var(--neu-btn-hover);
+    }
+
+    .expiry-ext-pill.active {
+      box-shadow: var(--neu-inset);
+      color: var(--accent);
+      border-color: rgba(108, 99, 255, 0.3);
+    }
+
+    .custom-ext-input-wrap {
+      margin-bottom: 0.75rem;
+      padding-top: 0.4rem;
+    }
+
+    .expiry-ext-preview {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      background: rgba(224, 229, 236, 0.6);
+      border-radius: 10px;
+      padding: 0.55rem 0.75rem;
+      margin-bottom: 0.85rem;
+      line-height: 1.45;
+      box-shadow: var(--neu-inset-sm);
+    }
+
+    /* ==========================================================================
        INVITATION & QR CODE MODAL
        ========================================================================== */
 
@@ -2327,6 +2706,47 @@
               Invite / QR
             </button>
           </div>
+
+          <!-- Creator Expiry Extension Popover (Clickable Countdown for Host) -->
+          <div class="expiry-popover" id="expiryExtensionPopover" style="display: none;" role="dialog" aria-label="Extend Room Lifetime">
+            <div class="expiry-popover-header">
+              <h4>Extend Room Duration</h4>
+              <button type="button" class="expiry-popover-close" id="btnCloseExpiryExt" aria-label="Close extension popover">&times;</button>
+            </div>
+            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.65rem;">
+              Room Creator: add time for all connected participants.
+            </p>
+            <div class="expiry-ext-presets" id="expiryExtPresets" role="radiogroup" aria-label="Extension presets">
+              <button type="button" class="expiry-ext-pill active" data-ext="5" role="radio" aria-checked="true">+5m</button>
+              <button type="button" class="expiry-ext-pill" data-ext="10" role="radio" aria-checked="false">+10m</button>
+              <button type="button" class="expiry-ext-pill" data-ext="15" role="radio" aria-checked="false">+15m</button>
+              <button type="button" class="expiry-ext-pill" data-ext="20" role="radio" aria-checked="false">+20m</button>
+              <button type="button" class="expiry-ext-pill" data-ext="custom" role="radio" aria-checked="false">Custom</button>
+            </div>
+            <div class="custom-ext-input-wrap" id="customExtInputWrap" style="display: none;">
+              <div style="display: flex; align-items: center; gap: 0.5rem;">
+                <input
+                  type="number"
+                  id="customExtInput"
+                  class="custom-expiry-input"
+                  min="1"
+                  max="60"
+                  value="15"
+                  placeholder="15"
+                  aria-label="Custom extension in minutes"
+                  style="width: 72px; height: 36px;"
+                />
+                <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">minutes (1 – 60m)</span>
+              </div>
+            </div>
+            <div class="expiry-ext-preview" id="expiryExtPreview">
+              Extension: <strong id="extAmountDisplay" style="color: var(--accent);">+5 minutes</strong><br />
+              <span id="extNewTimeDisplay" style="font-size: 0.74rem; color: var(--text-muted);">New expiry: calculating...</span>
+            </div>
+            <button type="button" class="neu-btn neu-btn-primary neu-btn-sm" style="width: 100%;" id="btnConfirmExtend">
+              Apply Extension
+            </button>
+          </div>
         </div>
 
         <!-- Live P2P Connection Status Banner -->
@@ -2352,7 +2772,31 @@
 
         <!-- Composer -->
         <div class="chat-composer-box">
+          <!-- Pending Document Attachment Preview Bar -->
+          <div class="attachment-preview-bar" id="attachmentPreviewBar" style="display: none;">
+            <div class="attachment-preview-info">
+              <span class="attachment-type-badge" id="attachmentTypeBadge">PDF</span>
+              <div class="attachment-details">
+                <span class="attachment-file-name" id="attachmentFileName">document.pdf</span>
+                <span class="attachment-file-size" id="attachmentFileSize">1.2 MB</span>
+              </div>
+            </div>
+            <button type="button" class="attachment-cancel-btn" id="btnCancelAttachment" title="Remove attachment" aria-label="Remove attachment">&times;</button>
+          </div>
+
           <form class="composer-form" id="composerForm" onsubmit="return false;">
+            <button type="button" class="composer-attach-btn" id="btnAttachDocument" title="Attach document (PDF, Word, Excel, PowerPoint, Text, OpenDocument up to 10MB)" aria-label="Attach document">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path>
+              </svg>
+            </button>
+            <input
+              type="file"
+              id="fileAttachmentInput"
+              style="display:none;"
+              accept=".pdf,.doc,.docx,.txt,.rtf,.ppt,.pptx,.xls,.xlsx,.odt,.ods,.odp"
+            />
+
             <div class="composer-input-container">
               <input
                 type="text"
@@ -2501,6 +2945,50 @@
       var btnModalNativeShare = document.getElementById("btnModalNativeShare");
       var appToast = document.getElementById("appToast");
 
+      // ----- Document Attachment Selectors -----------------------------------
+      var btnAttachDocument = document.getElementById("btnAttachDocument");
+      var fileAttachmentInput = document.getElementById("fileAttachmentInput");
+      var attachmentPreviewBar = document.getElementById("attachmentPreviewBar");
+      var attachmentTypeBadge = document.getElementById("attachmentTypeBadge");
+      var attachmentFileName = document.getElementById("attachmentFileName");
+      var attachmentFileSize = document.getElementById("attachmentFileSize");
+      var btnCancelAttachment = document.getElementById("btnCancelAttachment");
+
+      // ----- Creator Expiry Extension Selectors ------------------------------
+      var expiryExtensionPopover = document.getElementById("expiryExtensionPopover");
+      var btnCloseExpiryExt = document.getElementById("btnCloseExpiryExt");
+      var expiryExtPresets = document.getElementById("expiryExtPresets");
+      var customExtInputWrap = document.getElementById("customExtInputWrap");
+      var customExtInput = document.getElementById("customExtInput");
+      var extAmountDisplay = document.getElementById("extAmountDisplay");
+      var extNewTimeDisplay = document.getElementById("extNewTimeDisplay");
+      var btnConfirmExtend = document.getElementById("btnConfirmExtend");
+
+      // ----- Document Transfer & Expiry Constants / State -------------------
+      var MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MiB strictly enforced
+      var CHUNK_SIZE = 16384;               // 16 KiB chunks
+      var MAX_TOTAL_ROOM_LIFETIME_MS = 4 * 60 * 60 * 1000; // 4 hours maximum lifetime ceiling
+
+      var ALLOWED_FILE_TYPES = {
+        ".pdf": { label: "PDF", mime: "application/pdf" },
+        ".doc": { label: "DOC", mime: "application/msword" },
+        ".docx": { label: "DOCX", mime: "application/vnd.openxmlformats-officedocument.wordprocessingml.document" },
+        ".txt": { label: "TXT", mime: "text/plain" },
+        ".rtf": { label: "RTF", mime: "application/rtf" },
+        ".ppt": { label: "PPT", mime: "application/vnd.ms-powerpoint" },
+        ".pptx": { label: "PPTX", mime: "application/vnd.openxmlformats-officedocument.presentationml.presentation" },
+        ".xls": { label: "XLS", mime: "application/vnd.ms-excel" },
+        ".xlsx": { label: "XLSX", mime: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" },
+        ".odt": { label: "ODT", mime: "application/vnd.oasis.opendocument.text" },
+        ".ods": { label: "ODS", mime: "application/vnd.oasis.opendocument.spreadsheet" },
+        ".odp": { label: "ODP", mime: "application/vnd.oasis.opendocument.presentation" }
+      };
+
+      var pendingAttachment = null;
+      var activeBlobUrls = new Set();
+      var activeTransfers = new Map();
+      var selectedExtensionMinutes = 5;
+
       document.getElementById("currentYear").textContent = new Date().getFullYear();
 
       // ----- Notification & Status Helpers -----------------------------------
@@ -2571,6 +3059,503 @@
           url += "#" + hashParts.join("&");
         }
         return url;
+      }
+
+      // ----- Document Sanitization & Cryptographic Integrity Helpers ----------
+
+      function sanitizeFilename(filename) {
+        if (!filename || typeof filename !== "string") return "document";
+        // Strip directory traversal characters
+        var clean = filename.replace(/^.*[\\\/]/, "");
+        // Strip non-printable / control characters
+        clean = clean.replace(/[\x00-\x1F\x7F]/g, "");
+        // Replace hazardous filesystem and injection chars with underscore
+        clean = clean.replace(/[<>:"/\\|?*#;`$]/g, "_");
+        // Trim leading/trailing dots and spaces
+        clean = clean.trim().replace(/^\.+/, "").replace(/\.+$/, "");
+        if (!clean) clean = "document";
+        // Cap length at 100 characters while preserving extension
+        if (clean.length > 100) {
+          var extIdx = clean.lastIndexOf(".");
+          if (extIdx > 0 && extIdx > clean.length - 15) {
+            clean = clean.slice(0, 85) + clean.slice(extIdx);
+          } else {
+            clean = clean.slice(0, 100);
+          }
+        }
+        return clean;
+      }
+
+      function getFileExtension(filename) {
+        if (!filename) return "";
+        var idx = filename.lastIndexOf(".");
+        return idx !== -1 ? filename.slice(idx).toLowerCase() : "";
+      }
+
+      function formatBytes(bytes) {
+        if (bytes === 0) return "0 Bytes";
+        var k = 1024;
+        var sizes = ["Bytes", "KB", "MB", "GB"];
+        var i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+      }
+
+      function toUint8Array(chunk) {
+        if (chunk instanceof Uint8Array) return chunk;
+        if (chunk instanceof ArrayBuffer) return new Uint8Array(chunk);
+        if (chunk && chunk.buffer instanceof ArrayBuffer) {
+          return new Uint8Array(chunk.buffer, chunk.byteOffset || 0, chunk.byteLength);
+        }
+        return new Uint8Array(chunk);
+      }
+
+      async function calculateSHA256(arrayBuffer) {
+        if (window.crypto && window.crypto.subtle && window.crypto.subtle.digest) {
+          try {
+            var hashBuffer = await window.crypto.subtle.digest("SHA-256", arrayBuffer);
+            var hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(function (b) { return ("0" + b.toString(16)).slice(-2); }).join("");
+          } catch (e) {
+            console.warn("Subtle crypto error:", e);
+          }
+        }
+        return "sha256-unsupported";
+      }
+
+      // ----- Document Chat Rendering & Transfer Engine -------------------------
+
+      function renderDocMessage(transfer, isSelf) {
+        chatEmptyState.style.display = "none";
+
+        var bubble = document.createElement("div");
+        bubble.className = "chat-bubble doc-bubble " + (isSelf ? "sent" : "received");
+        bubble.id = "docBubble_" + transfer.transferId;
+
+        var date = new Date(transfer.timestamp || Date.now());
+        var timeStr = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+        var metaText = isSelf ? "You · " + timeStr : "Anonymous · " + timeStr;
+
+        var cardHeader = document.createElement("div");
+        cardHeader.className = "doc-card-header";
+
+        var iconBadge = document.createElement("div");
+        iconBadge.className = "doc-icon-badge";
+        var extLabel = (transfer.ext || "").replace(/^\./, "").toUpperCase() || "DOC";
+        iconBadge.textContent = extLabel.slice(0, 4);
+
+        var docInfo = document.createElement("div");
+        docInfo.className = "doc-info";
+
+        var docName = document.createElement("span");
+        docName.className = "doc-name";
+        docName.textContent = transfer.name;
+        docName.title = transfer.name;
+
+        var docSize = document.createElement("span");
+        docSize.className = "doc-size";
+        docSize.textContent = formatBytes(transfer.size);
+
+        docInfo.appendChild(docName);
+        docInfo.appendChild(docSize);
+        cardHeader.appendChild(iconBadge);
+        cardHeader.appendChild(docInfo);
+
+        var progressContainer = document.createElement("div");
+        progressContainer.className = "doc-progress-container";
+        progressContainer.id = "docProgress_" + transfer.transferId;
+
+        var progressBg = document.createElement("div");
+        progressBg.className = "doc-progress-bar-bg";
+        var progressFill = document.createElement("div");
+        progressFill.className = "doc-progress-bar-fill";
+        progressFill.style.width = (transfer.progress || 0) + "%";
+        progressBg.appendChild(progressFill);
+
+        var statusText = document.createElement("div");
+        statusText.className = "doc-status-text";
+        var statusSpan = document.createElement("span");
+        statusSpan.className = "doc-status-label";
+        statusSpan.textContent = transfer.status || (isSelf ? "Preparing..." : "Receiving...");
+
+        var cancelBtn = document.createElement("button");
+        cancelBtn.type = "button";
+        cancelBtn.className = "doc-cancel-link";
+        cancelBtn.textContent = "Cancel";
+        cancelBtn.addEventListener("click", function () {
+          cancelTransfer(transfer.transferId, true);
+        });
+
+        statusText.appendChild(statusSpan);
+        statusText.appendChild(cancelBtn);
+
+        progressContainer.appendChild(progressBg);
+        progressContainer.appendChild(statusText);
+
+        var actionsDiv = document.createElement("div");
+        actionsDiv.className = "doc-actions";
+        actionsDiv.id = "docActions_" + transfer.transferId;
+        actionsDiv.style.display = "none";
+
+        var downloadBtn = document.createElement("a");
+        downloadBtn.className = "neu-btn neu-btn-primary neu-btn-sm doc-download-btn";
+        downloadBtn.id = "docDownloadBtn_" + transfer.transferId;
+        downloadBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg> Download';
+
+        var verifyBadge = document.createElement("span");
+        verifyBadge.className = "doc-verify-badge";
+        verifyBadge.id = "docVerify_" + transfer.transferId;
+
+        actionsDiv.appendChild(downloadBtn);
+        actionsDiv.appendChild(verifyBadge);
+
+        var metaDiv = document.createElement("div");
+        metaDiv.className = "bubble-meta";
+        metaDiv.textContent = metaText;
+
+        bubble.appendChild(cardHeader);
+        bubble.appendChild(progressContainer);
+        bubble.appendChild(actionsDiv);
+        bubble.appendChild(metaDiv);
+
+        chatMessagesArea.appendChild(bubble);
+        chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
+
+        return {
+          bubble: bubble,
+          progressFill: progressFill,
+          statusLabel: statusSpan,
+          cancelBtn: cancelBtn,
+          progressContainer: progressContainer,
+          actionsDiv: actionsDiv,
+          downloadBtn: downloadBtn,
+          verifyBadge: verifyBadge
+        };
+      }
+
+      function updateDocProgress(transferId, percent, statusLabel) {
+        var t = activeTransfers.get(transferId);
+        if (!t || !t.elements) return;
+        t.elements.progressFill.style.width = percent + "%";
+        if (statusLabel) {
+          t.elements.statusLabel.textContent = statusLabel;
+        }
+      }
+
+      function completeDocTransfer(transferId, blobUrl, sha256) {
+        var t = activeTransfers.get(transferId);
+        if (!t || !t.elements) return;
+
+        t.elements.progressFill.style.width = "100%";
+        t.elements.cancelBtn.style.display = "none";
+        t.elements.progressContainer.style.display = "none";
+        t.elements.actionsDiv.style.display = "flex";
+
+        t.elements.downloadBtn.href = blobUrl;
+        t.elements.downloadBtn.download = t.name;
+
+        var shortHash = sha256 ? sha256.slice(0, 8) : "";
+        t.elements.verifyBadge.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> SHA-256: ' + shortHash + '...';
+        t.elements.verifyBadge.title = "Integrity verified (SHA-256: " + sha256 + ")";
+
+        chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
+      }
+
+      function failDocTransfer(transferId, reason) {
+        var t = activeTransfers.get(transferId);
+        if (!t || !t.elements) return;
+
+        t.elements.cancelBtn.style.display = "none";
+        t.elements.statusLabel.textContent = reason || "Transfer failed";
+        t.elements.statusLabel.style.color = "var(--error)";
+        t.elements.progressFill.style.background = "var(--error)";
+      }
+
+      function cancelTransfer(transferId, notifyPeer) {
+        var t = activeTransfers.get(transferId);
+        if (!t) return;
+        t.cancelled = true;
+
+        if (t.elements) {
+          t.elements.cancelBtn.style.display = "none";
+          t.elements.statusLabel.textContent = "Cancelled";
+        }
+
+        t.chunks = null;
+
+        if (notifyPeer) {
+          var cancelMsg = { type: "file_cancel", transferId: transferId };
+          if (isHost) {
+            broadcastToGuests(cancelMsg);
+          } else if (hostConnection && hostConnection.open) {
+            try { hostConnection.send(cancelMsg); } catch (e) {}
+          }
+        }
+      }
+
+      async function sendFileInChunks(transfer) {
+        var buffer = transfer.buffer;
+        var totalChunks = transfer.totalChunks;
+        var transferId = transfer.transferId;
+
+        for (var i = 0; i < totalChunks; i++) {
+          if (transfer.cancelled) {
+            console.log("[Transfer] Cancelled by user during send:", transferId);
+            return;
+          }
+          if (Date.now() >= roomExpiresAt) {
+            failDocTransfer(transferId, "Room expired during transfer");
+            return;
+          }
+
+          var start = i * CHUNK_SIZE;
+          var end = Math.min(start + CHUNK_SIZE, buffer.byteLength);
+          var chunk = buffer.slice(start, end);
+
+          var msg = {
+            type: "file_chunk",
+            transferId: transferId,
+            index: i,
+            chunk: chunk
+          };
+
+          if (isHost) {
+            for (var k = 0; k < activeConnections.length; k++) {
+              var c = activeConnections[k];
+              if (c && c.open && c.dataChannel) {
+                while (c.dataChannel.bufferedAmount > 64 * 1024) {
+                  await new Promise(function (r) { setTimeout(r, 10); });
+                }
+              }
+            }
+            broadcastToGuests(msg);
+          } else if (hostConnection && hostConnection.open) {
+            if (hostConnection.dataChannel) {
+              while (hostConnection.dataChannel.bufferedAmount > 64 * 1024) {
+                await new Promise(function (r) { setTimeout(r, 10); });
+              }
+            }
+            hostConnection.send(msg);
+          } else {
+            failDocTransfer(transferId, "Peer disconnected during transfer");
+            return;
+          }
+
+          var pct = Math.round(((i + 1) / totalChunks) * 100);
+          updateDocProgress(transferId, pct, "Sending " + pct + "%");
+
+          if (i % 8 === 0) {
+            await new Promise(function (r) { setTimeout(r, 0); });
+          }
+        }
+
+        var blob = new Blob([buffer], { type: transfer.mime });
+        var blobUrl = URL.createObjectURL(blob);
+        activeBlobUrls.add(blobUrl);
+        completeDocTransfer(transferId, blobUrl, transfer.sha256);
+      }
+
+      function initiateFileTransfer(att) {
+        var transferId = "xfer-" + Date.now() + "-" + Math.random().toString(36).slice(2, 7);
+        var totalChunks = Math.ceil(att.size / CHUNK_SIZE);
+
+        var txTransfer = {
+          transferId: transferId,
+          name: att.name,
+          size: att.size,
+          ext: att.ext,
+          mime: att.typeInfo.mime,
+          totalChunks: totalChunks,
+          timestamp: Date.now(),
+          cancelled: false
+        };
+
+        txTransfer.elements = renderDocMessage(txTransfer, true);
+        activeTransfers.set(transferId, txTransfer);
+
+        var reader = new FileReader();
+        reader.onload = async function (e) {
+          var buffer = e.target.result;
+          txTransfer.buffer = buffer;
+
+          updateDocProgress(transferId, 0, "Computing SHA-256...");
+          var sha256 = await calculateSHA256(buffer);
+          txTransfer.sha256 = sha256;
+
+          if (txTransfer.cancelled) return;
+
+          var startMsg = {
+            type: "file_start",
+            transferId: transferId,
+            name: att.name,
+            size: att.size,
+            ext: att.ext,
+            mime: att.typeInfo.mime,
+            totalChunks: totalChunks,
+            sha256: sha256,
+            timestamp: txTransfer.timestamp
+          };
+
+          if (isHost) {
+            broadcastToGuests(startMsg);
+          } else if (hostConnection && hostConnection.open) {
+            hostConnection.send(startMsg);
+          } else {
+            failDocTransfer(transferId, "No active connection to send file.");
+            return;
+          }
+
+          await sendFileInChunks(txTransfer);
+        };
+
+        reader.onerror = function () {
+          failDocTransfer(transferId, "Failed to read local file.");
+        };
+
+        reader.readAsArrayBuffer(att.file);
+      }
+
+      // ----- Creator Room Expiry Extension Controller -------------------------
+
+      function setupCreatorExpiryExtension() {
+        if (!pillCountdown) return;
+
+        pillCountdown.addEventListener("click", function (e) {
+          e.stopPropagation();
+          if (!isHost) return;
+          if (Date.now() >= roomExpiresAt) {
+            showToast("Room has already expired.");
+            return;
+          }
+          var isOpen = expiryExtensionPopover.style.display === "block";
+          expiryExtensionPopover.style.display = isOpen ? "none" : "block";
+          if (!isOpen) {
+            updateExtensionPreview();
+          }
+        });
+
+        if (expiryExtensionPopover) {
+          expiryExtensionPopover.addEventListener("click", function (e) {
+            e.stopPropagation();
+          });
+        }
+
+        if (btnCloseExpiryExt) {
+          btnCloseExpiryExt.addEventListener("click", function () {
+            expiryExtensionPopover.style.display = "none";
+          });
+        }
+
+        document.addEventListener("click", function (e) {
+          if (expiryExtensionPopover && expiryExtensionPopover.style.display === "block" &&
+              !expiryExtensionPopover.contains(e.target) &&
+              !pillCountdown.contains(e.target)) {
+            expiryExtensionPopover.style.display = "none";
+          }
+        });
+
+        if (expiryExtPresets) {
+          var extPills = expiryExtPresets.querySelectorAll(".expiry-ext-pill");
+          extPills.forEach(function (pill) {
+            pill.addEventListener("click", function () {
+              extPills.forEach(function (p) {
+                p.classList.remove("active");
+                p.setAttribute("aria-checked", "false");
+              });
+              pill.classList.add("active");
+              pill.setAttribute("aria-checked", "true");
+
+              var mode = pill.dataset.ext;
+              if (mode === "custom") {
+                customExtInputWrap.style.display = "block";
+                var val = parseInt(customExtInput.value, 10);
+                if (isNaN(val) || val < 1) val = 15;
+                if (val > 60) val = 60;
+                selectedExtensionMinutes = val;
+                customExtInput.value = val;
+                customExtInput.focus();
+              } else {
+                customExtInputWrap.style.display = "none";
+                selectedExtensionMinutes = parseInt(mode, 10) || 5;
+              }
+              updateExtensionPreview();
+            });
+          });
+        }
+
+        if (customExtInput) {
+          customExtInput.addEventListener("input", function () {
+            var val = parseInt(customExtInput.value, 10);
+            if (!isNaN(val)) {
+              if (val > 60) val = 60;
+              if (val < 1) val = 1;
+              selectedExtensionMinutes = val;
+            } else {
+              selectedExtensionMinutes = 15;
+            }
+            updateExtensionPreview();
+          });
+        }
+
+        if (btnConfirmExtend) {
+          btnConfirmExtend.addEventListener("click", function () {
+            applyCreatorExtension();
+          });
+        }
+      }
+
+      function updateExtensionPreview() {
+        if (!extAmountDisplay || !extNewTimeDisplay) return;
+        extAmountDisplay.textContent = "+" + selectedExtensionMinutes + " minutes";
+
+        var currentBase = Math.max(Date.now(), roomExpiresAt);
+        var target = currentBase + (selectedExtensionMinutes * 60 * 1000);
+
+        var maxLifetimeEnd = roomCreatedAt + MAX_TOTAL_ROOM_LIFETIME_MS;
+        if (target > maxLifetimeEnd) {
+          target = maxLifetimeEnd;
+          var cappedMin = Math.max(0, Math.floor((maxLifetimeEnd - roomExpiresAt) / 60000));
+          extAmountDisplay.textContent = "+" + cappedMin + " minutes (capped at 4h max)";
+        }
+
+        var d = new Date(target);
+        var timeStr = d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+        extNewTimeDisplay.textContent = "New expiry: " + timeStr;
+      }
+
+      function applyCreatorExtension() {
+        if (!isHost) return;
+        if (Date.now() >= roomExpiresAt) {
+          showToast("Cannot extend an expired room.");
+          expiryExtensionPopover.style.display = "none";
+          return;
+        }
+
+        var target = roomExpiresAt + (selectedExtensionMinutes * 60 * 1000);
+        var maxLifetimeEnd = roomCreatedAt + MAX_TOTAL_ROOM_LIFETIME_MS;
+        if (target > maxLifetimeEnd) {
+          target = maxLifetimeEnd;
+        }
+
+        var effectiveMinutes = Math.round((target - roomExpiresAt) / 60000);
+        if (effectiveMinutes <= 0) {
+          showToast("Maximum total room lifetime (4 hours) reached.");
+          expiryExtensionPopover.style.display = "none";
+          return;
+        }
+
+        roomExpiresAt = target;
+        startAbsoluteCountdown(roomExpiresAt);
+        updateInviteModalData(activeRoomCode, sessionKey, roomExpiresAt);
+        window.history.replaceState(null, "", getShareUrl(activeRoomCode, sessionKey, roomExpiresAt));
+
+        broadcastToGuests({
+          type: "expiry_extension",
+          newExpiresAt: roomExpiresAt,
+          extendedByMinutes: effectiveMinutes
+        });
+
+        expiryExtensionPopover.style.display = "none";
+        showToast("Room lifetime extended by +" + effectiveMinutes + "m!");
       }
 
       // ----- Dynamic Expiry Selector Management ------------------------------
@@ -2777,6 +3762,107 @@
           case "leave":
             removeHostConnection(conn);
             break;
+
+          case "file_start":
+            if (Date.now() >= roomExpiresAt) return;
+            if (!data.transferId || !data.name || typeof data.size !== "number" || data.size <= 0 || data.size > MAX_FILE_SIZE) {
+              console.warn("[Host] Disallowed file_start payload:", data);
+              return;
+            }
+            var hSanitized = sanitizeFilename(data.name);
+            var hExt = getFileExtension(hSanitized);
+            if (!ALLOWED_FILE_TYPES[hExt]) {
+              console.warn("[Host] Disallowed file extension:", hExt);
+              return;
+            }
+
+            var hRxTransfer = {
+              transferId: data.transferId,
+              name: hSanitized,
+              size: data.size,
+              ext: hExt,
+              mime: ALLOWED_FILE_TYPES[hExt].mime,
+              totalChunks: data.totalChunks,
+              sha256: data.sha256,
+              chunks: new Array(data.totalChunks),
+              receivedCount: 0,
+              timestamp: data.timestamp || Date.now()
+            };
+
+            hRxTransfer.elements = renderDocMessage(hRxTransfer, false);
+            activeTransfers.set(data.transferId, hRxTransfer);
+
+            // Relay to all other connected guests
+            activeConnections.forEach(function (c) {
+              if (c !== conn && c.open) {
+                try { c.send(data); } catch (e) {}
+              }
+            });
+            break;
+
+          case "file_chunk":
+            if (Date.now() >= roomExpiresAt) return;
+            var hRx = activeTransfers.get(data.transferId);
+            if (!hRx || hRx.cancelled) return;
+
+            if (typeof data.index !== "number" || data.index < 0 || data.index >= hRx.totalChunks) return;
+            if (!hRx.chunks[data.index]) {
+              hRx.chunks[data.index] = data.chunk;
+              hRx.receivedCount++;
+            }
+
+            var hPct = Math.round((hRx.receivedCount / hRx.totalChunks) * 100);
+            updateDocProgress(hRx.transferId, hPct, "Receiving " + hPct + "%");
+
+            // Relay chunk to all other connected guests
+            activeConnections.forEach(function (c) {
+              if (c !== conn && c.open) {
+                try { c.send(data); } catch (e) {}
+              }
+            });
+
+            if (hRx.receivedCount === hRx.totalChunks) {
+              updateDocProgress(hRx.transferId, 100, "Verifying SHA-256...");
+              var hAssembled = new Uint8Array(hRx.size);
+              var hOffset = 0;
+              for (var ci = 0; ci < hRx.totalChunks; ci++) {
+                var cData = toUint8Array(hRx.chunks[ci]);
+                hAssembled.set(cData, hOffset);
+                hOffset += cData.byteLength;
+              }
+              hRx.chunks = null;
+
+              calculateSHA256(hAssembled.buffer).then(function (computedHash) {
+                if (hRx.sha256 && computedHash.toLowerCase() !== hRx.sha256.toLowerCase()) {
+                  console.error("[Host] SHA-256 mismatch! Expected:", hRx.sha256, "Computed:", computedHash);
+                  failDocTransfer(hRx.transferId, "Integrity check failed: corrupted document");
+                  return;
+                }
+                var blob = new Blob([hAssembled], { type: hRx.mime });
+                var blobUrl = URL.createObjectURL(blob);
+                activeBlobUrls.add(blobUrl);
+                completeDocTransfer(hRx.transferId, blobUrl, computedHash);
+                showToast("Document received: " + hRx.name);
+              }).catch(function (err) {
+                console.error("[Host] SHA-256 verification error:", err);
+                failDocTransfer(hRx.transferId, "Integrity check error");
+              });
+            }
+            break;
+
+          case "file_cancel":
+            cancelTransfer(data.transferId, false);
+            activeConnections.forEach(function (c) {
+              if (c !== conn && c.open) {
+                try { c.send(data); } catch (e) {}
+              }
+            });
+            break;
+
+          case "expiry_extension":
+            // Host is authoritative; reject any expiry extension sent by guests
+            console.warn("[Host] Unauthorized expiry_extension attempt from guest; rejecting.");
+            break;
         }
       }
 
@@ -2936,6 +4022,101 @@
             showToast(data.text || "Connection rejected by host.");
             leaveRoomView();
             break;
+
+          case "file_start":
+            if (Date.now() >= roomExpiresAt) return;
+            if (!data.transferId || !data.name || typeof data.size !== "number" || data.size <= 0 || data.size > MAX_FILE_SIZE) {
+              console.warn("[Guest] Disallowed file_start payload:", data);
+              return;
+            }
+            var gSanitized = sanitizeFilename(data.name);
+            var gExt = getFileExtension(gSanitized);
+            if (!ALLOWED_FILE_TYPES[gExt]) {
+              console.warn("[Guest] Disallowed file extension:", gExt);
+              return;
+            }
+
+            var gRxTransfer = {
+              transferId: data.transferId,
+              name: gSanitized,
+              size: data.size,
+              ext: gExt,
+              mime: ALLOWED_FILE_TYPES[gExt].mime,
+              totalChunks: data.totalChunks,
+              sha256: data.sha256,
+              chunks: new Array(data.totalChunks),
+              receivedCount: 0,
+              timestamp: data.timestamp || Date.now()
+            };
+
+            gRxTransfer.elements = renderDocMessage(gRxTransfer, false);
+            activeTransfers.set(data.transferId, gRxTransfer);
+            break;
+
+          case "file_chunk":
+            if (Date.now() >= roomExpiresAt) return;
+            var gRx = activeTransfers.get(data.transferId);
+            if (!gRx || gRx.cancelled) return;
+
+            if (typeof data.index !== "number" || data.index < 0 || data.index >= gRx.totalChunks) return;
+            if (!gRx.chunks[data.index]) {
+              gRx.chunks[data.index] = data.chunk;
+              gRx.receivedCount++;
+            }
+
+            var gPct = Math.round((gRx.receivedCount / gRx.totalChunks) * 100);
+            updateDocProgress(gRx.transferId, gPct, "Receiving " + gPct + "%");
+
+            if (gRx.receivedCount === gRx.totalChunks) {
+              updateDocProgress(gRx.transferId, 100, "Verifying SHA-256...");
+              var gAssembled = new Uint8Array(gRx.size);
+              var gOffset = 0;
+              for (var gCi = 0; gCi < gRx.totalChunks; gCi++) {
+                var gcData = toUint8Array(gRx.chunks[gCi]);
+                gAssembled.set(gcData, gOffset);
+                gOffset += gcData.byteLength;
+              }
+              gRx.chunks = null;
+
+              calculateSHA256(gAssembled.buffer).then(function (computedHash) {
+                if (gRx.sha256 && computedHash.toLowerCase() !== gRx.sha256.toLowerCase()) {
+                  console.error("[Guest] SHA-256 mismatch! Expected:", gRx.sha256, "Computed:", computedHash);
+                  failDocTransfer(gRx.transferId, "Integrity check failed: corrupted document");
+                  return;
+                }
+                var blob = new Blob([gAssembled], { type: gRx.mime });
+                var blobUrl = URL.createObjectURL(blob);
+                activeBlobUrls.add(blobUrl);
+                completeDocTransfer(gRx.transferId, blobUrl, computedHash);
+                showToast("Document received: " + gRx.name);
+              }).catch(function (err) {
+                console.error("[Guest] SHA-256 verification error:", err);
+                failDocTransfer(gRx.transferId, "Integrity check error");
+              });
+            }
+            break;
+
+          case "file_cancel":
+            cancelTransfer(data.transferId, false);
+            break;
+
+          case "expiry_extension":
+            if (conn !== hostConnection) {
+              console.warn("[Guest] Expiry extension received from non-host peer, ignored.");
+              return;
+            }
+            if (typeof data.newExpiresAt !== "number" || data.newExpiresAt <= roomExpiresAt) {
+              return;
+            }
+            roomExpiresAt = data.newExpiresAt;
+            startAbsoluteCountdown(roomExpiresAt);
+            var hashParts = [];
+            if (sessionKey) hashParts.push("key=" + encodeURIComponent(sessionKey));
+            hashParts.push("exp=" + encodeURIComponent(roomExpiresAt));
+            window.history.replaceState(null, "", window.location.pathname + window.location.search + "#" + hashParts.join("&"));
+            showToast("Host extended room duration by +" + (data.extendedByMinutes || "") + "m!");
+            showBanner("Room duration extended by host to " + labelCountdown.textContent + " remaining.", "connected");
+            break;
         }
       }
 
@@ -2974,6 +4155,27 @@
         messageTextInput.disabled = false;
         btnSendMessage.disabled = false;
 
+        // Creator Interactive Expiry Controls
+        if (amHost) {
+          pillCountdown.classList.add("creator-interactive");
+          pillCountdown.setAttribute("title", "Click to extend room lifetime (Creator privilege)");
+          pillCountdown.setAttribute("role", "button");
+          pillCountdown.setAttribute("tabindex", "0");
+        } else {
+          pillCountdown.classList.remove("creator-interactive");
+          pillCountdown.removeAttribute("title");
+          pillCountdown.removeAttribute("role");
+          pillCountdown.removeAttribute("tabindex");
+        }
+        if (expiryExtensionPopover) {
+          expiryExtensionPopover.style.display = "none";
+        }
+
+        // Reset attachment preview
+        pendingAttachment = null;
+        if (fileAttachmentInput) fileAttachmentInput.value = "";
+        if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
+
         startAbsoluteCountdown(expiresAt);
         updateInviteModalData(code, sessionKey, expiresAt);
         window.scrollTo(0, 0);
@@ -2988,6 +4190,25 @@
         roomExpiresAt = 0;
         clearInterval(countdownInterval);
         hideBanner();
+
+        // Revoke all transient Blob URLs to free memory
+        activeBlobUrls.forEach(function (url) {
+          try { URL.revokeObjectURL(url); } catch (e) {}
+        });
+        activeBlobUrls.clear();
+
+        // Cancel any active transfers
+        activeTransfers.forEach(function (t) {
+          t.cancelled = true;
+          t.chunks = null;
+        });
+        activeTransfers.clear();
+
+        // Reset attachment UI
+        pendingAttachment = null;
+        if (fileAttachmentInput) fileAttachmentInput.value = "";
+        if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
+        if (expiryExtensionPopover) expiryExtensionPopover.style.display = "none";
 
         chatScreen.style.display = "none";
         topNavbar.style.display = "block";
@@ -3139,9 +4360,12 @@
         }
 
         var text = messageTextInput.value.trim();
-        if (!text) return;
+        var hasText = text.length > 0;
+        var hasAttachment = !!pendingAttachment;
 
-        if (text.length > 500) {
+        if (!hasText && !hasAttachment) return;
+
+        if (hasText && text.length > 500) {
           showToast("Message exceeds 500 characters limit.");
           return;
         }
@@ -3155,27 +4379,39 @@
         }
         messageTimestamps.push(now);
 
-        var payload = {
-          type: "chat",
-          text: text,
-          timestamp: now
-        };
+        // Send text message if present
+        if (hasText) {
+          var payload = {
+            type: "chat",
+            text: text,
+            timestamp: now
+          };
 
-        if (isHost) {
-          // Host sends to all active guests
-          broadcastToGuests(payload);
-          renderChatMessage(text, now, true);
-        } else if (hostConnection && hostConnection.open) {
-          // Guest sends to host
-          hostConnection.send(payload);
-          renderChatMessage(text, now, true);
-        } else {
-          showToast("No active peer connection to send message.");
-          return;
+          if (isHost) {
+            // Host sends to all active guests
+            broadcastToGuests(payload);
+            renderChatMessage(text, now, true);
+          } else if (hostConnection && hostConnection.open) {
+            // Guest sends to host
+            hostConnection.send(payload);
+            renderChatMessage(text, now, true);
+          } else {
+            showToast("No active peer connection to send message.");
+            return;
+          }
+
+          messageTextInput.value = "";
+          updateCharCounter();
         }
 
-        messageTextInput.value = "";
-        updateCharCounter();
+        // Send binary document attachment if selected
+        if (hasAttachment) {
+          var toSend = pendingAttachment;
+          pendingAttachment = null;
+          if (fileAttachmentInput) fileAttachmentInput.value = "";
+          if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
+          initiateFileTransfer(toSend);
+        }
       }
 
       function triggerLeaveRoom() {
@@ -3230,6 +4466,62 @@
       // ----- Event Listeners -------------------------------------------------
 
       setupExpirySelector();
+      setupCreatorExpiryExtension();
+
+      // Document Attachment Event Listeners
+      if (btnAttachDocument && fileAttachmentInput) {
+        btnAttachDocument.addEventListener("click", function () {
+          fileAttachmentInput.click();
+        });
+
+        fileAttachmentInput.addEventListener("change", function () {
+          if (!fileAttachmentInput.files || fileAttachmentInput.files.length === 0) return;
+          var file = fileAttachmentInput.files[0];
+
+          if (file.size > MAX_FILE_SIZE) {
+            showToast("File exceeds 10MB limit (" + formatBytes(file.size) + ").");
+            fileAttachmentInput.value = "";
+            return;
+          }
+
+          if (file.size === 0) {
+            showToast("Cannot send an empty 0-byte file.");
+            fileAttachmentInput.value = "";
+            return;
+          }
+
+          var cleanName = sanitizeFilename(file.name);
+          var ext = getFileExtension(cleanName);
+          var typeInfo = ALLOWED_FILE_TYPES[ext];
+
+          if (!typeInfo) {
+            showToast("Unsupported file extension (" + (ext || "none") + "). Allowed: PDF, Word, Excel, PPT, TXT, RTF, OpenDoc.");
+            fileAttachmentInput.value = "";
+            return;
+          }
+
+          pendingAttachment = {
+            file: file,
+            name: cleanName,
+            size: file.size,
+            ext: ext,
+            typeInfo: typeInfo
+          };
+
+          attachmentTypeBadge.textContent = typeInfo.label;
+          attachmentFileName.textContent = cleanName;
+          attachmentFileSize.textContent = formatBytes(file.size);
+          attachmentPreviewBar.style.display = "flex";
+        });
+      }
+
+      if (btnCancelAttachment) {
+        btnCancelAttachment.addEventListener("click", function () {
+          pendingAttachment = null;
+          if (fileAttachmentInput) fileAttachmentInput.value = "";
+          if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
+        });
+      }
 
       // Navigation & Hero buttons
       navCreateBtn.addEventListener("click", triggerCreateRoom);
