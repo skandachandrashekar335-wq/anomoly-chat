@@ -1942,3 +1942,128 @@ a {
 .char-limit-indicator.danger {
   color: var(--error);
 }
+
+
+/* Document transfer layout fix: keep the entire transfer card visible.
+   The DOM renderer uses doc-card-header/doc-progress-container/doc-actions;
+   older .doc-card/.doc-progress-wrap rules must not constrain these elements. */
+.chat-messages-area .chat-bubble.doc-bubble {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-self: flex-start;
+  box-sizing: border-box;
+  width: min(100%, 440px);
+  max-width: min(82%, 440px);
+  min-width: 0;
+  height: auto !important;
+  min-height: 0;
+  max-height: none !important;
+  padding: 1rem 1.125rem;
+  overflow: visible !important;
+  white-space: normal;
+  line-height: 1.4;
+}
+.chat-messages-area .chat-bubble.doc-bubble.sent {
+  align-self: flex-end;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-card-header {
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  gap: .75rem;
+  margin: 0 0 .75rem;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-icon-badge {
+  flex: 0 0 38px;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-info {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-name {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow-wrap: anywhere;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-size {
+  display: block;
+  margin-top: .2rem;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-progress-container {
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  height: auto !important;
+  max-height: none !important;
+  flex-direction: column;
+  gap: .4rem;
+  margin: 0 0 .65rem;
+  overflow: visible !important;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-progress-bar-bg {
+  flex: 0 0 4px;
+  height: 4px;
+  min-height: 4px;
+  overflow: hidden;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-status-text {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .35rem .75rem;
+  min-height: 1rem;
+  line-height: 1.4;
+  white-space: normal;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-actions {
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  min-width: 0;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: .5rem;
+  margin-top: .25rem;
+  padding-top: .75rem;
+  overflow: visible;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-download-btn {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 40px;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+.chat-messages-area .chat-bubble.doc-bubble .doc-verify-badge {
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.chat-messages-area .chat-bubble.doc-bubble .bubble-meta {
+  flex: 0 0 auto;
+  display: block;
+  margin-top: .65rem;
+  line-height: 1.4;
+}
+@media (max-width: 600px) {
+  .chat-messages-area .chat-bubble.doc-bubble {
+    width: min(100%, 360px);
+    max-width: 92%;
+    padding: .875rem;
+  }
+  .chat-messages-area .chat-bubble.doc-bubble .doc-actions {
+    align-items: flex-start;
+  }
+  .chat-messages-area .chat-bubble.doc-bubble .doc-verify-badge {
+    font-size: .625rem;
+  }
+}
