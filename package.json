@@ -9,7 +9,9 @@
     "dev": "ts-node src/index.ts",
     "typecheck": "tsc --noEmit",
     "test": "npm run build && node --test dist/index.test.js",
-    "test:smoke": "node scripts/e2e-smoke.mjs"
+    "test:smoke": "node scripts/e2e-smoke.mjs",
+    "test:viewports": "node scripts/verify-viewports.mjs",
+    "test:interactions": "node scripts/test-interactions.mjs"
   },
   "repository": {
     "type": "git",

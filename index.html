@@ -4,2115 +4,42 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Anomoly Chat — Temporary Peer-to-Peer Chat & Document Sharing</title>
-  <meta name="description" content="Temporary, accountless peer-to-peer chat and document sharing. No registration or application file storage. WebRTC connectivity and privacy have network-dependent limitations.">
-  <meta name="theme-color" content="#E0E5EC">
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%236C63FF%22 stroke-width=%222.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z%22/><circle cx=%229%22 cy=%2210%22 r=%221%22 fill=%22%236C63FF%22/><circle cx=%2215%22 cy=%2210%22 r=%221%22 fill=%22%236C63FF%22/></svg>">
+  <meta name="description" content="Temporary, accountless peer-to-peer chat and document sharing. No registration, no server database, browser-to-browser WebRTC encryption with absolute room expiry.">
+  <meta name="theme-color" content="#EBEBE8">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%230066FF%22 stroke-width=%222.2%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22><path d=%22M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z%22/><circle cx=%229%22 cy=%2210%22 r=%221.2%22 fill=%22%230066FF%22/><circle cx=%2215%22 cy=%2210%22 r=%221.2%22 fill=%22%230066FF%22/></svg>">
 
-  <!-- Google Fonts: Plus Jakarta Sans for headings, DM Sans for body -->
+  <!-- Google Fonts: Inter for UI & Playfair Display for editorial emphasis -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@1,400;1,600&display=swap" rel="stylesheet">
 
   <!-- Client-side WebRTC and QR libraries (Static, Serverless, Zero-Database) -->
   <script src="peerjs.min.js"></script>
   <script src="qrcode.min.js"></script>
 
-  <style>
-    /* ==========================================================================
-       NEUMORPHISM (SOFT UI) DESIGN SYSTEM — ANOMOLY CHAT
-       Tokens:
-       - Background: #E0E5EC
-       - Primary text: #3D4852
-       - Secondary text: #6B7280
-       - Primary accent: #6C63FF (violet)
-       - Accent hover: #8B84FF
-       - Success: #38B2AC (teal)
-       - Error: #E53E3E
-       - Headings: Plus Jakarta Sans
-       - Body: DM Sans
-       ========================================================================== */
-
-    :root {
-      --bg: #E0E5EC;
-      --bg-subtle: #EBEEF3;
-      --text-primary: #3D4852;
-      --text-secondary: #6B7280;
-      --text-muted: #9CA3AF;
-      --accent: #6C63FF;
-      --accent-hover: #8B84FF;
-      --accent-pressed: #5A55D2;
-      --accent-subtle: rgba(108, 99, 255, 0.12);
-      --success: #38B2AC;
-      --error: #E53E3E;
-      --border-subtle: rgba(163, 177, 198, 0.35);
-
-      /* Neumorphic shadow tokens on #E0E5EC */
-      --shadow-light: #ffffff;
-      --shadow-dark: #b8bec9;
-
-      /* Raised surfaces */
-      --neu-flat: 8px 8px 18px var(--shadow-dark), -8px -8px 18px var(--shadow-light);
-      --neu-flat-sm: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
-      --neu-flat-lg: 14px 14px 28px var(--shadow-dark), -14px -14px 28px var(--shadow-light);
-
-      /* Inset / pressed surfaces */
-      --neu-inset: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
-      --neu-inset-deep: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light);
-
-      /* Button specific shadows */
-      --neu-btn: 5px 5px 12px var(--shadow-dark), -5px -5px 12px var(--shadow-light);
-      --neu-btn-hover: 7px 7px 16px var(--shadow-dark), -7px -7px 16px var(--shadow-light);
-      --neu-btn-pressed: inset 3px 3px 6px var(--shadow-dark), inset -3px -3px 6px var(--shadow-light);
-
-      /* Accent glow shadows */
-      --neu-btn-accent: 4px 4px 14px rgba(108, 99, 255, 0.35), -4px -4px 12px var(--shadow-light);
-      --neu-btn-accent-hover: 6px 6px 18px rgba(108, 99, 255, 0.45), -6px -6px 14px var(--shadow-light);
-
-      --font-heading: "Plus Jakarta Sans", system-ui, -apple-system, sans-serif;
-      --font-body: "DM Sans", system-ui, -apple-system, sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-    }
-
-    /* CSS Reset */
-    *, *::before, *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-      font-size: 16px;
-    }
-
-    body {
-      background-color: var(--bg);
-      color: var(--text-primary);
-      font-family: var(--font-body);
-      line-height: 1.6;
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
-      min-height: 100vh;
-    }
-
-    h1, h2, h3, h4, h5, h6 {
-      font-family: var(--font-heading);
-      color: var(--text-primary);
-      line-height: 1.25;
-      font-weight: 700;
-    }
-
-    a {
-      color: inherit;
-      text-decoration: none;
-      transition: color 0.2s ease;
-    }
-
-    /* Accessibility */
-    :focus-visible {
-      outline: 2px solid var(--accent);
-      outline-offset: 3px;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-    }
-
-    /* Layout Container */
-    .container {
-      width: 100%;
-      max-width: 1200px;
-      margin-left: auto;
-      margin-right: auto;
-      padding-left: 1.5rem;
-      padding-right: 1.5rem;
-    }
-
-    .section {
-      padding: 5rem 0;
-      position: relative;
-    }
-
-    .section-header {
-      text-align: center;
-      max-width: 720px;
-      margin: 0 auto 3.5rem;
-    }
-
-    .section-eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.9rem;
-      border-radius: 999px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      color: var(--accent);
-      font-size: 0.85rem;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-
-    .section-title {
-      font-size: clamp(1.85rem, 3.2vw, 2.5rem);
-      margin-bottom: 1rem;
-    }
-
-    .section-description {
-      font-size: clamp(1rem, 1.4vw, 1.15rem);
-      color: var(--text-secondary);
-      line-height: 1.65;
-    }
-
-    /* ==========================================================================
-       BUTTONS & CONTROLS
-       ========================================================================== */
-
-    .neu-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.6rem;
-      padding: 0.875rem 1.75rem;
-      font-family: var(--font-heading);
-      font-size: 1rem;
-      font-weight: 600;
-      border-radius: 14px;
-      border: none;
-      cursor: pointer;
-      user-select: none;
-      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-      min-height: 48px;
-    }
-
-    .neu-btn-primary {
-      background: var(--accent);
-      color: #ffffff;
-      box-shadow: var(--neu-btn-accent);
-    }
-
-    .neu-btn-primary:hover:not(:disabled) {
-      background: var(--accent-hover);
-      box-shadow: var(--neu-btn-accent-hover);
-      transform: translateY(-2px);
-    }
-
-    .neu-btn-primary:active:not(:disabled) {
-      background: var(--accent-pressed);
-      box-shadow: inset 2px 2px 6px rgba(0, 0, 0, 0.25);
-      transform: translateY(1px);
-    }
-
-    .neu-btn-secondary {
-      background: var(--bg);
-      color: var(--text-primary);
-      box-shadow: var(--neu-btn);
-    }
-
-    .neu-btn-secondary:hover:not(:disabled) {
-      box-shadow: var(--neu-btn-hover);
-      transform: translateY(-2px);
-      color: var(--accent);
-    }
-
-    .neu-btn-secondary:active:not(:disabled) {
-      box-shadow: var(--neu-btn-pressed);
-      transform: translateY(1px);
-    }
-
-    .neu-btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: var(--neu-flat-sm);
-      transform: none !important;
-    }
-
-    .neu-btn-sm {
-      padding: 0.55rem 1.15rem;
-      font-size: 0.875rem;
-      min-height: 38px;
-      border-radius: 10px;
-    }
-
-    /* Neumorphic Cards */
-    .neu-card {
-      background: var(--bg);
-      border-radius: 24px;
-      box-shadow: var(--neu-flat);
-      padding: 2.25rem;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .neu-card-interactive:hover {
-      box-shadow: var(--neu-flat-lg);
-      transform: translateY(-3px);
-    }
-
-    /* ==========================================================================
-       NAVIGATION BAR
-       ========================================================================== */
-
-    .navbar {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      z-index: 1000;
-      background: rgba(224, 229, 236, 0.94);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-      border-bottom: 1px solid var(--border-subtle);
-      transition: background 0.3s ease;
-    }
-
-    .nav-inner {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      height: 74px;
-    }
-
-    .nav-brand {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      text-decoration: none;
-    }
-
-    .brand-icon {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-    }
-
-    .brand-text {
-      font-family: var(--font-heading);
-      font-size: 1.3rem;
-      font-weight: 800;
-      letter-spacing: -0.02em;
-      color: var(--text-primary);
-    }
-
-    .brand-badge {
-      font-size: 0.65rem;
-      font-weight: 700;
-      padding: 0.15rem 0.45rem;
-      border-radius: 6px;
-      background: var(--accent-subtle);
-      color: var(--accent);
-      margin-left: 0.4rem;
-      vertical-align: middle;
-      text-transform: uppercase;
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-      list-style: none;
-    }
-
-    .nav-link {
-      font-family: var(--font-heading);
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      position: relative;
-      padding: 0.4rem 0;
-    }
-
-    .nav-link:hover {
-      color: var(--accent);
-    }
-
-    .nav-actions {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-
-    .nav-toggle {
-      display: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      border: none;
-      cursor: pointer;
-      color: var(--text-primary);
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* Mobile Menu Drawer */
-    .mobile-menu {
-      display: none;
-      background: var(--bg);
-      border-bottom: 1px solid var(--border-subtle);
-      padding: 1.5rem;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-    }
-
-    .mobile-menu.open {
-      display: block;
-    }
-
-    .mobile-nav-links {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      list-style: none;
-      margin-bottom: 1.5rem;
-    }
-
-    .mobile-nav-link {
-      font-family: var(--font-heading);
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    /* ==========================================================================
-       HERO SECTION
-       ========================================================================== */
-
-    .hero-section {
-      padding-top: calc(74px + 3.5rem);
-      padding-bottom: 4.5rem;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1.15fr 0.85fr;
-      gap: 3.5rem;
-      align-items: center;
-    }
-
-    .hero-headline {
-      font-size: clamp(1.85rem, 6.5vw, 3.6rem);
-      font-weight: 800;
-      letter-spacing: -0.03em;
-      margin-bottom: 1.5rem;
-      color: var(--text-primary);
-      word-break: break-word;
-    }
-
-    .hero-headline .highlight {
-      color: var(--accent);
-      position: relative;
-    }
-
-    .hero-copy {
-      font-size: clamp(1.05rem, 1.4vw, 1.2rem);
-      color: var(--text-secondary);
-      line-height: 1.7;
-      margin-bottom: 2.25rem;
-      max-width: 580px;
-    }
-
-    .hero-ctas {
-      display: flex;
-      align-items: center;
-      gap: 1.25rem;
-      flex-wrap: wrap;
-      margin-bottom: 2.5rem;
-    }
-
-    .hero-trust-badges {
-      display: flex;
-      align-items: center;
-      gap: 1.5rem;
-      flex-wrap: wrap;
-      padding-top: 1.5rem;
-      border-top: 1px solid var(--border-subtle);
-    }
-
-    .trust-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-
-    .trust-badge svg {
-      color: var(--success);
-      flex-shrink: 0;
-    }
-
-    /* Hero Simulation Mockup */
-    .hero-mockup {
-      background: var(--bg);
-      border-radius: 28px;
-      box-shadow: var(--neu-flat-lg);
-      padding: 1.75rem;
-      position: relative;
-    }
-
-    .mockup-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border-subtle);
-    }
-
-    .mockup-room-pill {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      padding: 0.35rem 0.8rem;
-      border-radius: 10px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .mockup-timer-pill {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0.8rem;
-      border-radius: 10px;
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    .mockup-chat-body {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .mockup-msg {
-      max-width: 82%;
-      padding: 0.85rem 1.15rem;
-      border-radius: 18px;
-      font-size: 0.9rem;
-      line-height: 1.5;
-    }
-
-    .mockup-msg-in {
-      align-self: flex-start;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      color: var(--text-primary);
-      border-bottom-left-radius: 4px;
-    }
-
-    .mockup-msg-out {
-      align-self: flex-end;
-      background: var(--accent);
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
-      box-shadow: 2px 2px 8px rgba(108, 99, 255, 0.3);
-    }
-
-    .mockup-msg-time {
-      font-size: 0.7rem;
-      opacity: 0.75;
-      margin-top: 0.3rem;
-      text-align: right;
-    }
-
-    .mockup-caption {
-      text-align: center;
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-    }
-
-    /* ==========================================================================
-       ROOM ENTRY SECTION
-       ========================================================================== */
-
-    .room-entry-wrapper {
-      max-width: 980px;
-      margin: 0 auto;
-    }
-
-    .room-entry-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2.5rem;
-      align-items: stretch;
-    }
-
-    .entry-card {
-      background: var(--bg);
-      border-radius: 24px;
-      box-shadow: var(--neu-flat);
-      padding: 2.5rem 2rem;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-    }
-
-    .entry-icon-box {
-      width: 54px;
-      height: 54px;
-      border-radius: 16px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      margin-bottom: 1.5rem;
-    }
-
-    .entry-card h3 {
-      font-size: 1.4rem;
-      margin-bottom: 0.6rem;
-    }
-
-    .entry-card p {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      margin-bottom: 1.75rem;
-      flex-grow: 1;
-    }
-
-    .code-input-wrapper {
-      position: relative;
-      margin-bottom: 1.25rem;
-    }
-
-    .neu-input {
-      width: 100%;
-      height: 56px;
-      background: var(--bg);
-      border: 2px solid transparent;
-      border-radius: 14px;
-      box-shadow: var(--neu-inset-deep);
-      padding: 0 1.25rem;
-      font-family: var(--font-body);
-      font-size: 1.1rem;
-      color: var(--text-primary);
-      transition: all 0.2s ease;
-    }
-
-    .neu-input-code {
-      font-family: var(--font-mono);
-      font-size: 1.4rem;
-      font-weight: 700;
-      letter-spacing: 0.25em;
-      text-align: center;
-    }
-
-    .neu-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light), 0 0 0 3px var(--accent-subtle);
-    }
-
-    .neu-input::placeholder {
-      color: var(--text-muted);
-      letter-spacing: 0.2em;
-    }
-
-    .input-helper-msg {
-      font-size: 0.8rem;
-      color: var(--text-muted);
-      margin-top: 0.4rem;
-      text-align: center;
-      min-height: 1.2rem;
-    }
-
-    .input-helper-msg.error {
-      color: var(--error);
-      font-weight: 600;
-    }
-
-    /* ==========================================================================
-       ROOM LIFETIME / EXPIRY SELECTOR (DYNAMIC LIFETIME FEATURE)
-       ========================================================================== */
-
-    .expiry-selector-wrapper {
-      margin: 1.15rem 0 1rem;
-      padding: 0.9rem 1rem;
-      border-radius: 16px;
-      background: var(--bg);
-      box-shadow: var(--neu-inset-sm);
-    }
-
-    .expiry-selector-label {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.6rem;
-    }
-
-    .expiry-presets {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 0.4rem;
-    }
-
-    .expiry-pill {
-      padding: 0.45rem 0.2rem;
-      background: var(--bg);
-      border: 1px solid transparent;
-      border-radius: 10px;
-      box-shadow: var(--neu-flat-sm);
-      font-family: var(--font-heading);
-      font-size: 0.85rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-      user-select: none;
-    }
-
-    .expiry-pill:hover {
-      color: var(--accent);
-      transform: translateY(-2px);
-      box-shadow: var(--neu-btn-hover);
-    }
-
-    .expiry-pill:active {
-      transform: translateY(1px);
-    }
-
-    .expiry-pill.active {
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      color: var(--accent);
-      font-weight: 700;
-      border-color: rgba(108, 99, 255, 0.3);
-    }
-
-    .custom-expiry-container {
-      margin-top: 0.65rem;
-      padding-top: 0.65rem;
-      border-top: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    .custom-expiry-input {
-      width: 75px;
-      height: 38px;
-      background: var(--bg);
-      border: 1.5px solid transparent;
-      border-radius: 10px;
-      box-shadow: var(--neu-inset);
-      font-family: var(--font-mono);
-      font-size: 1rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      text-align: center;
-      padding: 0 0.5rem;
-      transition: border-color 0.2s ease;
-    }
-
-    .custom-expiry-input:focus {
-      border-color: var(--accent);
-      outline: none;
-    }
-
-    .selected-lifetime-indicator {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      margin-top: 0.55rem;
-      line-height: 1.4;
-    }
-
-    /* Accessibility focus and reduced motion */
-    :focus-visible {
-      outline: 2.5px solid var(--accent);
-      outline-offset: 3px;
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-        scroll-behavior: auto !important;
-      }
-    }
-
-    /* ==========================================================================
-       FEATURES SECTION
-       ========================================================================== */
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-      gap: 2rem;
-    }
-
-    .feature-card {
-      background: var(--bg);
-      border-radius: 22px;
-      box-shadow: var(--neu-flat);
-      padding: 2.25rem 1.75rem;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .feature-card:hover {
-      transform: translateY(-4px);
-      box-shadow: var(--neu-flat-lg);
-    }
-
-    .feature-icon-badge {
-      width: 50px;
-      height: 50px;
-      border-radius: 14px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      margin-bottom: 1.5rem;
-    }
-
-    .feature-title {
-      font-size: 1.25rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .feature-text {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    /* ==========================================================================
-       HOW IT WORKS SECTION
-       ========================================================================== */
-
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      position: relative;
-    }
-
-    .step-card {
-      background: var(--bg);
-      border-radius: 22px;
-      box-shadow: var(--neu-flat);
-      padding: 2.25rem 1.75rem;
-      text-align: center;
-      position: relative;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-    }
-
-    .step-number {
-      width: 56px;
-      height: 56px;
-      border-radius: 50%;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-heading);
-      font-size: 1.4rem;
-      font-weight: 800;
-      color: var(--accent);
-      margin-bottom: 1.5rem;
-    }
-
-    .step-title {
-      font-size: 1.25rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .step-desc {
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    /* ==========================================================================
-       PRODUCT WALKTHROUGH & ARCHITECTURE
-       ========================================================================== */
-
-    .walkthrough-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: 1.75rem;
-    }
-
-    .walkthrough-item {
-      background: var(--bg);
-      border-radius: 20px;
-      box-shadow: var(--neu-flat);
-      padding: 1.75rem;
-      display: flex;
-      gap: 1.25rem;
-    }
-
-    .walkthrough-icon {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-    }
-
-    .walkthrough-content h4 {
-      font-size: 1.1rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .walkthrough-content p {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      line-height: 1.55;
-    }
-
-    /* ==========================================================================
-       SECURITY & HONEST CRYPTOGRAPHY
-       ========================================================================== */
-
-    .security-box {
-      background: var(--bg);
-      border-radius: 28px;
-      box-shadow: var(--neu-flat);
-      padding: 3rem 2.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .security-points-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 2rem;
-      margin-top: 2rem;
-    }
-
-    .security-point {
-      display: flex;
-      gap: 1rem;
-      align-items: flex-start;
-    }
-
-    .security-point-icon {
-      flex-shrink: 0;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--success);
-      margin-top: 0.15rem;
-    }
-
-    .security-point h4 {
-      font-size: 1.05rem;
-      margin-bottom: 0.35rem;
-    }
-
-    .security-point p {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.55;
-    }
-
-    .honest-crypto-banner {
-      margin-top: 2.5rem;
-      padding: 1.5rem 1.75rem;
-      border-radius: 18px;
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      border-left: 4px solid var(--accent);
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .honest-crypto-banner p {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* ==========================================================================
-       FAQ ACCORDION
-       ========================================================================== */
-
-    .faq-list {
-      max-width: 840px;
-      margin: 0 auto;
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-    }
-
-    .faq-item {
-      background: var(--bg);
-      border-radius: 18px;
-      box-shadow: var(--neu-flat);
-      overflow: hidden;
-      transition: all 0.2s ease;
-    }
-
-    .faq-question {
-      width: 100%;
-      padding: 1.5rem 1.75rem;
-      background: none;
-      border: none;
-      font-family: var(--font-heading);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      text-align: left;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-    }
-
-    .faq-question svg {
-      transition: transform 0.25s ease;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-
-    .faq-item.active .faq-question svg {
-      transform: rotate(180deg);
-    }
-
-    .faq-answer {
-      display: none;
-      padding: 0 1.75rem 1.5rem;
-      color: var(--text-secondary);
-      font-size: 0.95rem;
-      line-height: 1.65;
-    }
-
-    .faq-item.active .faq-answer {
-      display: block;
-    }
-
-    /* ==========================================================================
-       FOOTER
-       ========================================================================== */
-
-    .footer {
-      background: var(--bg);
-      border-top: 1px solid var(--border-subtle);
-      padding: 4rem 0 2.5rem;
-    }
-
-    .footer-grid {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 2rem;
-      margin-bottom: 2.5rem;
-    }
-
-    .footer-brand {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .footer-tagline {
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }
-
-    .footer-nav {
-      display: flex;
-      align-items: center;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .footer-link {
-      font-size: 0.9rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-    }
-
-    .footer-link:hover {
-      color: var(--accent);
-    }
-
-    .footer-bottom {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-      padding-top: 2rem;
-      border-top: 1px solid var(--border-subtle);
-      font-size: 0.85rem;
-      color: var(--text-muted);
-    }
-
-    .student-note {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.25rem 0.65rem;
-      border-radius: 8px;
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-    }
-
-    /* ==========================================================================
-       CHAT SCREEN (LIVE APPLICATION VIEW)
-       ========================================================================== */
-
-    #chatScreen {
-      display: none;
-      min-height: 100vh;
-      background: var(--bg);
-      padding-top: 74px;
-      flex-direction: column;
-    }
-
-    .chat-container {
-      max-width: 1040px;
-      width: 100%;
-      margin: 1.25rem auto 2rem;
-      padding: 0 1.25rem;
-      flex: 1 1 auto;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .chat-panel {
-      background: var(--bg);
-      border-radius: 24px;
-      box-shadow: var(--neu-flat);
-      display: flex;
-      flex-direction: column;
-      height: min(700px, calc(100vh - 110px));
-      min-height: 480px;
-      overflow: hidden;
-      position: relative;
-    }
-
-    /* Chat Panel Header */
-    .chat-panel-header {
-      padding: 0.85rem 1.5rem;
-      border-bottom: 1px solid var(--border-subtle);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-      background: rgba(224, 229, 236, 0.85);
-      backdrop-filter: blur(8px);
-      z-index: 10;
-      flex-shrink: 0;
-    }
-
-    .chat-room-info {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .room-badge-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      padding: 0.4rem 0.85rem;
-      border-radius: 12px;
-      background: var(--bg);
-      box-shadow: var(--neu-btn);
-      border: none;
-      cursor: pointer;
-      font-family: var(--font-mono);
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      transition: all 0.15s ease;
-    }
-
-    .room-badge-btn:hover {
-      box-shadow: var(--neu-btn-hover);
-      color: var(--accent);
-    }
-
-    .room-badge-btn:active {
-      box-shadow: var(--neu-btn-pressed);
-    }
-
-    .chat-status-badges {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-
-    .status-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.35rem 0.7rem;
-      border-radius: 8px;
-      background: var(--bg);
-      box-shadow: var(--neu-inset);
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-secondary);
-      transition: all 0.2s ease;
-    }
-
-    .status-pill.online {
-      color: var(--success);
-    }
-
-    .status-pill.waiting {
-      color: #D97706;
-    }
-
-    .status-pill.connecting {
-      color: var(--accent);
-    }
-
-    .status-pill.disconnected {
-      color: var(--error);
-    }
-
-    .status-pill.timer {
-      color: var(--accent);
-      font-family: var(--font-mono);
-    }
-
-    .chat-header-actions {
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-    }
-
-    /* Live P2P Status Notification Banner */
-    .chat-status-banner {
-      padding: 0.6rem 1.5rem;
-      background: rgba(108, 99, 255, 0.08);
-      border-bottom: 1px solid var(--border-subtle);
-      font-size: 0.82rem;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      flex-shrink: 0;
-      transition: all 0.3s ease;
-    }
-
-    .chat-status-banner.warning {
-      background: rgba(217, 119, 6, 0.12);
-      color: #92400E;
-    }
-
-    .chat-status-banner.connected {
-      background: rgba(56, 178, 172, 0.12);
-      color: #234E52;
-    }
-
-    .chat-status-banner.error {
-      background: rgba(229, 62, 62, 0.12);
-      color: #742A2A;
-    }
-
-    /* Natural Column Messages Display Area */
-    .chat-messages-area {
-      flex: 1 1 auto;
-      padding: 1.25rem 1.5rem;
-      overflow-y: auto;
-      display: flex;
-      flex-direction: column;
-      gap: 0.75rem;
-      justify-content: flex-start;
-      scroll-behavior: smooth;
-    }
-
-    .chat-empty-state {
-      margin: auto;
-      text-align: center;
-      max-width: 440px;
-      padding: 1.5rem 1rem;
-    }
-
-    .empty-state-icon {
-      width: 56px;
-      height: 56px;
-      border-radius: 18px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--accent);
-      margin: 0 auto 1rem;
-    }
-
-    .chat-empty-state h3 {
-      font-size: 1.15rem;
-      margin-bottom: 0.4rem;
-    }
-
-    .chat-empty-state p {
-      color: var(--text-secondary);
-      font-size: 0.88rem;
-      line-height: 1.5;
-    }
-
-    /* Message Bubbles */
-    .chat-bubble {
-      max-width: min(80%, 540px);
-      padding: 0.75rem 1.15rem;
-      border-radius: 18px;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      word-break: break-word;
-      position: relative;
-      animation: bubbleFadeIn 0.2s ease-out;
-    }
-
-    @keyframes bubbleFadeIn {
-      from { opacity: 0; transform: translateY(4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .chat-bubble.sent {
-      align-self: flex-end;
-      background: var(--accent);
-      color: #ffffff;
-      border-bottom-right-radius: 4px;
-      box-shadow: 2px 3px 8px rgba(108, 99, 255, 0.3);
-    }
-
-    .chat-bubble.received {
-      align-self: flex-start;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      color: var(--text-primary);
-      border-bottom-left-radius: 4px;
-    }
-
-    .bubble-text {
-      white-space: pre-wrap;
-      word-break: break-word;
-    }
-
-    .bubble-meta {
-      display: flex;
-      align-items: center;
-      justify-content: flex-end;
-      gap: 0.5rem;
-      margin-top: 0.3rem;
-      font-size: 0.7rem;
-      opacity: 0.75;
-    }
-
-    .chat-bubble.received .bubble-meta {
-      color: var(--text-muted);
-    }
-
-    /* Chat Composer */
-    .chat-composer-box {
-      padding: 0.9rem 1.5rem;
-      border-top: 1px solid var(--border-subtle);
-      background: rgba(224, 229, 236, 0.85);
-      flex-shrink: 0;
-    }
-
-    .composer-form {
-      display: flex;
-      gap: 0.75rem;
-      align-items: center;
-    }
-
-    .composer-input-container {
-      position: relative;
-      flex-grow: 1;
-    }
-
-    .composer-input {
-      width: 100%;
-      height: 48px;
-      background: var(--bg);
-      border: 2px solid transparent;
-      border-radius: 14px;
-      box-shadow: var(--neu-inset-deep);
-      padding: 0 4.5rem 0 1.15rem;
-      font-family: var(--font-body);
-      font-size: 0.95rem;
-      color: var(--text-primary);
-      transition: all 0.2s ease;
-    }
-
-    .composer-input:focus {
-      outline: none;
-      border-color: var(--accent);
-      box-shadow: inset 2px 2px 5px var(--shadow-dark), inset -2px -2px 5px var(--shadow-light), 0 0 0 3px var(--accent-subtle);
-    }
-
-    .char-limit-indicator {
-      position: absolute;
-      right: 1rem;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 0.75rem;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-      pointer-events: none;
-    }
-
-    .char-limit-indicator.warn {
-      color: #D97706;
-      font-weight: 700;
-    }
-
-    .char-limit-indicator.danger {
-      color: var(--error);
-      font-weight: 800;
-    }
-
-    /* ==========================================================================
-       DOCUMENT ATTACHMENT & FILE TRANSFER (P2P WEBRTC)
-       ========================================================================== */
-
-    .composer-attach-btn {
-      width: 44px;
-      height: 44px;
-      border-radius: 12px;
-      background: var(--bg);
-      border: none;
-      box-shadow: var(--neu-btn);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .composer-attach-btn:hover {
-      color: var(--accent);
-      box-shadow: var(--neu-btn-hover);
-      transform: translateY(-1px);
-    }
-
-    .composer-attach-btn:active {
-      box-shadow: var(--neu-btn-pressed);
-      transform: translateY(1px);
-    }
-
-    .composer-attach-btn:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-      transform: none !important;
-    }
-
-    /* Attachment Preview Bar above Composer Input */
-    .attachment-preview-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      padding: 0.6rem 0.9rem;
-      margin-bottom: 0.65rem;
-      background: var(--bg);
-      border-radius: 14px;
-      box-shadow: var(--neu-flat-sm);
-      border: 1px solid rgba(108, 99, 255, 0.25);
-      animation: bubbleFadeIn 0.2s ease-out;
-    }
-
-    .attachment-preview-info {
-      display: flex;
-      align-items: center;
-      gap: 0.65rem;
-      min-width: 0;
-      flex: 1 1 auto;
-    }
-
-    .attachment-type-badge {
-      padding: 0.25rem 0.5rem;
-      border-radius: 6px;
-      background: var(--accent);
-      color: #ffffff;
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      font-weight: 800;
-      letter-spacing: 0.05em;
-      flex-shrink: 0;
-    }
-
-    .attachment-details {
-      display: flex;
-      flex-direction: column;
-      min-width: 0;
-    }
-
-    .attachment-file-name {
-      font-size: 0.88rem;
-      font-weight: 700;
-      color: var(--text-primary);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    .attachment-file-size {
-      font-size: 0.75rem;
-      color: var(--text-muted);
-    }
-
-    .attachment-cancel-btn {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--bg);
-      border: none;
-      box-shadow: var(--neu-flat-sm);
-      font-size: 1.15rem;
-      line-height: 1;
-      color: var(--text-secondary);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 0.15s ease;
-    }
-
-    .attachment-cancel-btn:hover {
-      color: var(--error);
-      box-shadow: var(--neu-btn-hover);
-    }
-
-    /* Document Message Bubble Card */
-    .chat-bubble.doc-bubble {
-      min-width: min(300px, 85vw);
-      max-width: min(420px, 88vw);
-      padding: 0.95rem 1.15rem;
-    }
-
-    .doc-card-header {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      margin-bottom: 0.65rem;
-    }
-
-    .doc-icon-badge {
-      width: 40px;
-      height: 40px;
-      border-radius: 12px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 800;
-      text-transform: uppercase;
-      color: var(--accent);
-      flex-shrink: 0;
-    }
-
-    .chat-bubble.sent .doc-icon-badge {
-      background: rgba(255, 255, 255, 0.2);
-      color: #ffffff;
-      box-shadow: inset 1px 1px 2px rgba(255, 255, 255, 0.3), inset -1px -1px 2px rgba(0, 0, 0, 0.2);
-    }
-
-    .doc-info {
-      flex: 1 1 auto;
-      min-width: 0;
-    }
-
-    .doc-name {
-      font-size: 0.92rem;
-      font-weight: 700;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: block;
-    }
-
-    .doc-size {
-      font-size: 0.75rem;
-      opacity: 0.85;
-      display: block;
-      margin-top: 0.15rem;
-    }
-
-    .doc-progress-container {
-      margin: 0.5rem 0 0.35rem;
-    }
-
-    .doc-progress-bar-bg {
-      width: 100%;
-      height: 6px;
-      background: rgba(0, 0, 0, 0.08);
-      border-radius: 999px;
-      overflow: hidden;
-      box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.15);
-    }
-
-    .chat-bubble.sent .doc-progress-bar-bg {
-      background: rgba(255, 255, 255, 0.25);
-    }
-
-    .doc-progress-bar-fill {
-      height: 100%;
-      width: 0%;
-      background: var(--accent);
-      border-radius: 999px;
-      transition: width 0.15s ease-out;
-    }
-
-    .chat-bubble.sent .doc-progress-bar-fill {
-      background: #ffffff;
-    }
-
-    .doc-status-text {
-      font-size: 0.75rem;
-      margin-top: 0.35rem;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      opacity: 0.9;
-    }
-
-    .doc-cancel-link {
-      background: none;
-      border: none;
-      color: inherit;
-      text-decoration: underline;
-      cursor: pointer;
-      font-size: 0.75rem;
-      padding: 0;
-      opacity: 0.85;
-    }
-
-    .doc-cancel-link:hover {
-      opacity: 1;
-      color: var(--error);
-    }
-
-    .chat-bubble.sent .doc-cancel-link:hover {
-      color: #ffcccc;
-    }
-
-    .doc-actions {
-      margin-top: 0.75rem;
-      display: flex;
-      gap: 0.5rem;
-      align-items: center;
-    }
-
-    .doc-download-btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.45rem;
-      text-decoration: none;
-      font-size: 0.82rem;
-      padding: 0.45rem 0.9rem;
-      border-radius: 10px;
-    }
-
-    .doc-verify-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.35rem;
-      font-size: 0.72rem;
-      color: var(--success);
-      font-weight: 600;
-    }
-
-    .chat-bubble.sent .doc-verify-badge {
-      color: rgba(255, 255, 255, 0.95);
-    }
-
-    /* ==========================================================================
-       CREATOR ROOM EXPIRY EXTENSION POPOVER
-       ========================================================================== */
-
-    .status-pill.timer.creator-interactive {
-      cursor: pointer;
-      position: relative;
-      transition: all 0.2s ease;
-    }
-
-    .status-pill.timer.creator-interactive:hover {
-      box-shadow: var(--neu-btn-hover);
-      color: var(--accent-hover);
-      transform: translateY(-1px);
-    }
-
-    .status-pill.timer.creator-interactive:active {
-      box-shadow: var(--neu-btn-pressed);
-      transform: translateY(1px);
-    }
-
-    .expiry-popover {
-      position: absolute;
-      top: 62px;
-      right: 1.5rem;
-      z-index: 100;
-      width: 310px;
-      max-width: calc(100vw - 2.5rem);
-      background: var(--bg);
-      border-radius: 20px;
-      box-shadow: var(--neu-flat-lg);
-      padding: 1.25rem;
-      border: 1px solid var(--border-subtle);
-      animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes popoverFadeIn {
-      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
-      to { opacity: 1; transform: translateY(0) scale(1); }
-    }
-
-    .expiry-popover-header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 0.65rem;
-    }
-
-    .expiry-popover-header h4 {
-      font-size: 0.95rem;
-      font-weight: 700;
-      color: var(--text-primary);
-    }
-
-    .expiry-popover-close {
-      background: none;
-      border: none;
-      cursor: pointer;
-      font-size: 1.25rem;
-      color: var(--text-secondary);
-      line-height: 1;
-      padding: 0;
-    }
-
-    .expiry-popover-close:hover {
-      color: var(--text-primary);
-    }
-
-    .expiry-ext-presets {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 0.35rem;
-      margin-bottom: 0.75rem;
-    }
-
-    .expiry-ext-pill {
-      padding: 0.4rem 0.15rem;
-      background: var(--bg);
-      border: 1px solid transparent;
-      border-radius: 8px;
-      box-shadow: var(--neu-flat-sm);
-      font-family: var(--font-heading);
-      font-size: 0.78rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.15s ease;
-      user-select: none;
-    }
-
-    .expiry-ext-pill:hover {
-      color: var(--accent);
-      box-shadow: var(--neu-btn-hover);
-    }
-
-    .expiry-ext-pill.active {
-      box-shadow: var(--neu-inset);
-      color: var(--accent);
-      border-color: rgba(108, 99, 255, 0.3);
-    }
-
-    .custom-ext-input-wrap {
-      margin-bottom: 0.75rem;
-      padding-top: 0.4rem;
-    }
-
-    .expiry-ext-preview {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      background: rgba(224, 229, 236, 0.6);
-      border-radius: 10px;
-      padding: 0.55rem 0.75rem;
-      margin-bottom: 0.85rem;
-      line-height: 1.45;
-      box-shadow: var(--neu-inset-sm);
-    }
-
-    /* ==========================================================================
-       INVITATION & QR CODE MODAL
-       ========================================================================== */
-
-    .modal-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 2000;
-      background: rgba(61, 72, 82, 0.45);
-      backdrop-filter: blur(4px);
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-
-    .modal-overlay.open {
-      display: flex;
-    }
-
-    .modal-card {
-      background: var(--bg);
-      border-radius: 28px;
-      box-shadow: var(--neu-flat-lg);
-      max-width: 480px;
-      width: 100%;
-      padding: 2.25rem;
-      text-align: center;
-      position: relative;
-      animation: modalPop 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    @keyframes modalPop {
-      from { transform: scale(0.92); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
-    }
-
-    .modal-close-btn {
-      position: absolute;
-      top: 1.25rem;
-      right: 1.25rem;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: var(--bg);
-      box-shadow: var(--neu-btn);
-      border: none;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-secondary);
-    }
-
-    .modal-close-btn:hover {
-      color: var(--accent);
-    }
-
-    .qr-frame {
-      width: 220px;
-      height: 220px;
-      margin: 1.5rem auto;
-      border-radius: 20px;
-      background: var(--bg);
-      box-shadow: var(--neu-flat-sm);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-      overflow: hidden;
-    }
-
-    .qr-frame img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      display: block;
-    }
-
-    .share-link-box {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--bg);
-      border-radius: 12px;
-      box-shadow: var(--neu-inset);
-      padding: 0.5rem 0.75rem;
-      margin: 1.25rem 0;
-    }
-
-    .share-url-text {
-      flex-grow: 1;
-      font-size: 0.85rem;
-      color: var(--text-secondary);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      text-align: left;
-    }
-
-    /* Toast notification */
-    .toast {
-      position: fixed;
-      bottom: 2rem;
-      left: 50%;
-      transform: translateX(-50%) translateY(100px);
-      background: var(--text-primary);
-      color: #ffffff;
-      padding: 0.75rem 1.5rem;
-      border-radius: 999px;
-      font-size: 0.9rem;
-      font-weight: 600;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-      z-index: 3000;
-      opacity: 0;
-      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      pointer-events: none;
-    }
-
-    .toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-
-    /* ==========================================================================
-       RESPONSIVE ADJUSTMENTS
-       ========================================================================== */
-
-    @media (max-width: 992px) {
-      .hero-grid {
-        grid-template-columns: 1fr;
-        gap: 3rem;
-      }
-      .hero-mockup {
-        max-width: 500px;
-        margin: 0 auto;
-      }
-      .steps-grid {
-        grid-template-columns: 1fr;
-      }
-      .security-points-grid {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .nav-links {
-        display: none;
-      }
-      .nav-toggle {
-        display: flex;
-      }
-      #navCreateBtn {
-        display: none;
-      }
-      .hero-ctas {
-        flex-direction: column;
-        width: 100%;
-      }
-      .hero-ctas .neu-btn {
-        width: 100%;
-      }
-      .room-entry-grid {
-        grid-template-columns: 1fr;
-        gap: 2rem;
-      }
-      .chat-panel {
-        height: calc(100vh - 90px);
-      }
-    }
-
-    @media (max-width: 480px) {
-      .container {
-        padding-left: 1rem;
-        padding-right: 1rem;
-      }
-      .brand-badge {
-        display: none;
-      }
-      .neu-card, .entry-card, .feature-card, .step-card, .security-box {
-        padding: 1.75rem 1.25rem;
-      }
-      .hero-mockup {
-        padding: 1.25rem 1rem;
-      }
-      .chat-panel-header {
-        padding: 1rem 0.75rem;
-      }
-      .chat-composer-box {
-        padding: 1rem 0.75rem;
-      }
-      .modal-card {
-        padding: 1.75rem 1.25rem;
-      }
-    }
-
-    /* Warm Industrial — editorial product skin */
-    :root {
-      --bg: #EBEBE8 !important;
-      --bg-secondary: #F4F4F1 !important;
-      --text-primary: #18181B !important;
-      --text-secondary: #52525B !important;
-      --border-subtle: #D4D4D8 !important;
-      --accent: #0066FF !important;
-      --font-heading: 'Inter', sans-serif;
-      --font-body: 'Inter', sans-serif;
-      --industrial-ease: cubic-bezier(0.16, 1, 0.3, 1);
-      --neu-flat: none !important;
-      --neu-pressed: none !important;
-    }
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Playfair+Display:ital,wght@1,400&display=swap');
-    html { scroll-behavior: smooth; background: #EBEBE8; }
-    body {
-      background: #EBEBE8 !important;
-      color: #18181B !important;
-      font-family: 'Inter', sans-serif !important;
-      position: relative;
-      isolation: isolate;
-    }
-    body::before {
-      content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none;
-      background-image: linear-gradient(to right, rgba(24,24,27,.075) 1px, transparent 1px);
-      background-size: calc(min(100vw, 1600px) / 12) 100%;
-      background-position: center top;
-      mask-image: linear-gradient(to bottom, black 0%, rgba(0,0,0,.72) 72%, transparent 100%);
-    }
-    body::after {
-      content: ""; position: fixed; inset: 0; z-index: 20; pointer-events: none; opacity: .035;
-      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.8'/%3E%3C/svg%3E");
-    }
-    *, *::before, *::after { transition-timing-function: var(--industrial-ease) !important; }
-    a, button, input, select, textarea { -webkit-tap-highlight-color: transparent; }
-    .container { width: min(100% - 48px, 1440px) !important; max-width: 1440px !important; }
-    .navbar {
-      background: rgba(235,235,232,.88) !important; backdrop-filter: blur(12px) !important;
-      border-bottom: 1px solid #D4D4D8 !important; box-shadow: none !important;
-    }
-    .nav-inner { min-height: 80px !important; }
-    .nav-brand, .nav-brand * { color: #18181B !important; }
-    .brand-icon { background: #0066FF !important; color: #fff !important; border-radius: 2px !important; box-shadow: none !important; }
-    .nav-link, .nav-links a, .nav-cta, .section-eyebrow, .input-helper-msg, .entry-card label,
-    .footer, .footer a { letter-spacing: .12em; }
-    .nav-link, .nav-links a { font-size: 10px !important; font-weight: 700 !important; text-transform: uppercase; }
-    .hero-section { padding-top: clamp(120px, 15vw, 190px) !important; padding-bottom: clamp(64px, 9vw, 128px) !important; }
-    .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(300px, 5fr) !important; gap: clamp(28px, 5vw, 84px) !important; }
-    .section-eyebrow {
-      background: transparent !important; border: 0 !important; border-radius: 0 !important;
-      padding: 0 !important; color: #0066FF !important; font-size: 10px !important;
-      font-weight: 800 !important; letter-spacing: .22em !important; text-transform: uppercase;
-    }
-    .hero-headline {
-      font-size: clamp(3.5rem, 8.4vw, 8.5rem) !important; line-height: .91 !important;
-      letter-spacing: -.075em !important; font-weight: 900 !important; max-width: 9ch;
-      margin: 28px 0 !important; text-wrap: balance;
-    }
-    .hero-headline em, .hero-headline i, .editorial-italic {
-      font-family: 'Playfair Display', Georgia, serif !important; font-weight: 400 !important;
-      letter-spacing: -.065em !important;
-    }
-    .hero-description, .hero-subtitle, .section-description { max-width: 48ch; color: #52525B !important; line-height: 1.8 !important; }
-    .hero-content { position: relative; }
-    .hero-content::before { content: "FIELD NOTE / 001"; display: block; margin-bottom: 22px; color: #71717A; font: 700 10px/1.4 ui-monospace, monospace; letter-spacing: .18em; }
-    .neu-card, .entry-card, .feature-card, .modal-card, .room-panel, .chat-panel {
-      border: 1px solid #D4D4D8 !important; border-radius: 2px !important;
-      box-shadow: none !important;
-    }
-    .entry-card { background: rgba(244,244,241,.82) !important; padding: clamp(24px, 3vw, 44px) !important; }
-    .entry-card:hover, .feature-card:hover { transform: translateY(-3px); border-color: #0066FF !important; }
-    input, select, textarea {
-      background: #F8F8F6 !important; border: 1px solid #D4D4D8 !important;
-      border-radius: 2px !important; box-shadow: none !important; color: #18181B !important;
-    }
-    input:focus, select:focus, textarea:focus { outline: 2px solid #0066FF !important; outline-offset: 2px; border-color: #0066FF !important; }
-    .neu-btn, button {
-      border-radius: 2px !important; box-shadow: none !important;
-      transition: transform .45s var(--industrial-ease), background-color .3s var(--industrial-ease), color .3s var(--industrial-ease), border-color .3s var(--industrial-ease) !important;
-    }
-    .neu-btn-primary, .btn-primary, #btnActionCreate {
-      background: #0066FF !important; color: #fff !important; border: 1px solid #0066FF !important;
-      font-size: 11px !important; font-weight: 800 !important; letter-spacing: .14em !important; text-transform: uppercase;
-      min-height: 54px;
-    }
-    .neu-btn-primary:hover, #btnActionCreate:hover { background: #18181B !important; border-color: #18181B !important; transform: translateY(-2px); }
-    .neu-btn:not(.neu-btn-primary) { border: 1px solid #D4D4D8 !important; background: transparent !important; }
-    .entry-icon-box, .feature-icon, .icon-box { border-radius: 2px !important; box-shadow: none !important; }
-    .footer { background: #18181B !important; color: #EBEBE8 !important; border-top: 1px solid #18181B !important; }
-    .footer, .footer * { color: #EBEBE8; }
-    .footer a:hover { color: #80ADFF !important; }
-    .footer-brand .brand-icon { background: #0066FF !important; }
-    ::selection { background: #0066FF; color: white; }
-    @media (min-width: 1200px) {
-      .hero-grid { min-height: 570px; }
-      .hero-headline { font-size: clamp(7rem, 9vw, 9.5rem) !important; }
-    }
-    @media (max-width: 900px) {
-      .container { width: min(100% - 32px, 720px) !important; }
-      .hero-grid { grid-template-columns: 1fr !important; }
-      .hero-headline { font-size: clamp(3.5rem, 13vw, 6.5rem) !important; max-width: 10ch; }
-      body::before { background-size: calc(min(100vw, 1600px) / 6) 100%; }
-    }
-    @media (max-width: 520px) {
-      .container { width: calc(100% - 28px) !important; }
-      .hero-section { padding-top: 112px !important; }
-      .hero-headline { font-size: clamp(3.2rem, 16vw, 5rem) !important; }
-      .entry-card { padding: 22px 18px !important; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
-    }
-
-  </style>
+  <!-- Warm Industrial Stylesheet -->
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Texture Overlay (Fractal Noise ~3.5%) -->
+  <div class="noise-overlay" aria-hidden="true"></div>
+
+  <!-- 12-Column Architectural Grid Overlay -->
+  <div class="grid-overlay" aria-hidden="true">
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+    <div class="grid-col"></div>
+  </div>
 
   <!-- ==========================================================================
        NAVIGATION BAR
@@ -2120,38 +47,40 @@
   <header class="navbar" id="topNavbar">
     <div class="container">
       <div class="nav-inner">
-        <a href="#hero" class="nav-brand">
+        <a href="#hero" class="nav-brand" aria-label="Anomoly Chat Home">
           <div class="brand-icon">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
               <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
             </svg>
           </div>
-          <div>
-            <span class="brand-text">Anomoly Chat</span>
-            <span class="brand-badge">In-Memory</span>
+          <div class="brand-title-wrap">
+            <span class="brand-text">ANOMOLY CHAT</span>
+            <span class="brand-badge">P2P RAM</span>
           </div>
         </a>
 
-        <ul class="nav-links">
-          <li><a href="#features" class="nav-link">Features</a></li>
-          <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
-          <li><a href="#walkthrough" class="nav-link">Walkthrough</a></li>
-          <li><a href="#security" class="nav-link">Privacy & Security</a></li>
-          <li><a href="#faq" class="nav-link">FAQ</a></li>
-        </ul>
+        <nav aria-label="Primary Navigation">
+          <ul class="nav-links">
+            <li><a href="#start" class="nav-link">Rooms</a></li>
+            <li><a href="#features" class="nav-link">Features</a></li>
+            <li><a href="#how-it-works" class="nav-link">Architecture</a></li>
+            <li><a href="#security" class="nav-link">Privacy & Security</a></li>
+            <li><a href="#faq" class="nav-link">FAQ</a></li>
+          </ul>
+        </nav>
 
         <div class="nav-actions">
-          <button class="neu-btn neu-btn-primary neu-btn-sm" id="navCreateBtn">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <button class="btn btn-primary btn-sm neu-btn neu-btn-primary neu-btn-sm" id="navCreateBtn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <line x1="12" y1="5" x2="12" y2="19"></line>
               <line x1="5" y1="12" x2="19" y2="12"></line>
             </svg>
             Create Room
           </button>
-          <button class="nav-toggle" id="navToggleBtn" aria-label="Toggle navigation">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <button class="nav-toggle" id="navToggleBtn" aria-label="Toggle navigation" aria-expanded="false">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <line x1="3" y1="12" x2="21" y2="12"></line>
               <line x1="3" y1="6" x2="21" y2="6"></line>
               <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -2162,15 +91,15 @@
     </div>
 
     <!-- Mobile Navigation Drawer -->
-    <div class="mobile-menu" id="mobileMenu">
+    <div class="mobile-menu" id="mobileMenu" aria-label="Mobile Navigation">
       <ul class="mobile-nav-links">
+        <li><a href="#start" class="mobile-nav-link" onclick="closeMobileMenu()">Rooms</a></li>
         <li><a href="#features" class="mobile-nav-link" onclick="closeMobileMenu()">Features</a></li>
-        <li><a href="#how-it-works" class="mobile-nav-link" onclick="closeMobileMenu()">How It Works</a></li>
-        <li><a href="#walkthrough" class="mobile-nav-link" onclick="closeMobileMenu()">Walkthrough</a></li>
+        <li><a href="#how-it-works" class="mobile-nav-link" onclick="closeMobileMenu()">Architecture</a></li>
         <li><a href="#security" class="mobile-nav-link" onclick="closeMobileMenu()">Privacy & Security</a></li>
         <li><a href="#faq" class="mobile-nav-link" onclick="closeMobileMenu()">FAQ</a></li>
       </ul>
-      <button class="neu-btn neu-btn-primary" style="width: 100%;" id="mobileCreateBtn">
+      <button class="btn btn-primary neu-btn neu-btn-primary" style="width: 100%;" id="mobileCreateBtn">
         Create a Room Now
       </button>
     </div>
@@ -2186,25 +115,25 @@
       <div class="container">
         <div class="hero-grid">
           <div class="hero-content">
-            <div class="section-eyebrow">
-              <span>✨</span>
-              <span>Accountless • Temporary • Peer-to-Peer</span>
+            <div class="hero-eyebrow">
+              <span class="status-dot-active"></span>
+              <span>PEER-TO-PEER · BROWSER-NATIVE · EPHEMERAL</span>
             </div>
             <h1 class="hero-headline">
-              Temporary conversations, without creating an account.
+              Temporary chat that <em class="font-serif">disappears</em> when you're done.
             </h1>
             <p class="hero-copy">
-              Create temporary rooms without an account, phone number, or email. Chat and share documents directly over WebRTC when your network permits; rooms have a chosen expiry.
+              Accountless, direct browser-to-browser communication. No telephone numbers, passwords, or emails. Encrypted over WebRTC DataChannels, held purely in memory, and automatically wiped on absolute expiration.
             </p>
             <div class="hero-ctas">
-              <button class="neu-btn neu-btn-primary" id="heroCreateBtn">
+              <button class="btn btn-primary neu-btn neu-btn-primary" id="heroCreateBtn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="12" y1="5" x2="12" y2="19"></line>
                   <line x1="5" y1="12" x2="19" y2="12"></line>
                 </svg>
                 Create a Room
               </button>
-              <a href="#start" class="neu-btn neu-btn-secondary" id="heroJoinBtn">
+              <a href="#start" class="btn btn-secondary neu-btn neu-btn-secondary" id="heroJoinBtn">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                   <polyline points="10 17 15 12 10 7"></polyline>
@@ -2213,102 +142,88 @@
                 Join with Code
               </a>
             </div>
-            <div class="hero-trust-badges">
-              <div class="trust-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Zero Registration Required
-              </div>
-              <div class="trust-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                5-Min Inactivity Auto-Destruct
-              </div>
-              <div class="trust-badge">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                Volatile RAM Storage Only
-              </div>
+            <div class="hero-tech-readout">
+              <span>● WEBRTC P2P</span>
+              <span>● NO SERVER DB</span>
+              <span>● 10MB SHA-256 DOCS</span>
+              <span>● ABSOLUTE EXPIRY</span>
             </div>
           </div>
 
-          <!-- Hero Visual Simulation -->
-          <div class="hero-mockup" aria-label="Interactive room preview">
-            <div class="mockup-header">
-              <div class="mockup-room-pill">
-                <span style="color: var(--accent);">●</span>
-                <span>Room #K7M9Q2</span>
+          <!-- Hero Product Visualization Panel -->
+          <div class="hero-mockup-wrapper">
+            <div class="hero-product-panel" aria-label="Interactive room preview">
+              <div class="product-panel-header">
+                <div class="panel-header-left">
+                  <span class="panel-dot"></span>
+                  <span class="product-panel-title">ROOM #X9K4P2 · DIRECT DATACHANNEL</span>
+                </div>
+                <span class="product-panel-timer">04:38 REMAINING</span>
               </div>
-              <div class="mockup-timer-pill">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
-                <span>Expires in 04:38</span>
+              <div class="product-panel-body">
+                <div class="mockup-msg mockup-msg-in">
+                  Ready to review the architecture brief?
+                  <span class="mockup-msg-meta">PEER A · 14:20</span>
+                </div>
+                <div class="mockup-msg mockup-msg-out">
+                  Sending the 2.4 MB document over WebRTC now.
+                  <span class="mockup-msg-meta">YOU · 14:21</span>
+                </div>
+                <div class="mockup-doc-card">
+                  <div class="mockup-doc-icon">PDF</div>
+                  <div class="mockup-doc-info">
+                    <span class="mockup-doc-name">project-architecture.pdf (2.4 MB)</span>
+                    <span class="mockup-doc-sub">SHA-256 VERIFIED · IN-MEMORY BLOB</span>
+                  </div>
+                </div>
+                <div class="mockup-msg mockup-msg-in">
+                  Received bit-for-bit match. Memory wipes on timer expiry.
+                  <span class="mockup-msg-meta">PEER A · 14:22</span>
+                </div>
               </div>
-            </div>
-            <div class="mockup-chat-body">
-              <div class="mockup-msg mockup-msg-in">
-                Can we review the project notes here securely?
-                <div class="mockup-msg-time">Anonymous · 7:18 PM</div>
-              </div>
-              <div class="mockup-msg mockup-msg-out">
-                No account is needed. Still, network metadata is visible to relevant providers and a recipient can save anything they receive.
-                <div class="mockup-msg-time" style="color: rgba(255,255,255,0.85);">You · 7:19 PM</div>
-              </div>
-              <div class="mockup-msg mockup-msg-in">
-                Temporary chat, no registration.
-                <div class="mockup-msg-time">Anonymous · 7:19 PM</div>
-              </div>
-            </div>
-            <div class="mockup-caption">
-              <span>🔒</span>
-              <span>Illustrative UI preview • Actual connections use WebRTC</span>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- ROOM ENTRY SECTION -->
-    <section class="section" id="start" style="background: rgba(224, 229, 236, 0.4);">
+    <!-- ROOM ENTRY SECTION (#start) -->
+    <section class="section" id="start">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>🚀</span>
-            <span>Get Started Immediately</span>
-          </div>
+          <div class="section-eyebrow">ROOM ORCHESTRATION</div>
           <h2 class="section-title">Create or Join a Room</h2>
           <p class="section-description">
-            Choose an option below. No passwords, credentials, or registration forms to fill out.
+            Zero friction, zero registration. Spin up an ephemeral room or join an existing session via 6-character room code.
           </p>
         </div>
 
         <div class="room-entry-wrapper">
           <div class="room-entry-grid">
-            <!-- Create Room Option -->
-            <div class="entry-card neu-card-interactive">
-              <div>
+            <!-- Create Room Card -->
+            <div class="entry-card">
+              <div class="entry-card-header">
                 <div class="entry-icon-box">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="16"></line>
                     <line x1="8" y1="12" x2="16" y2="12"></line>
                   </svg>
                 </div>
-                <h3>Create a New Room</h3>
-                <p>
-                  Spin up an isolated, temporary room code. You can invite peers via a share link or instant QR code.
-                </p>
+                <div>
+                  <h3 class="entry-title">Create a New Room</h3>
+                  <p class="entry-description">
+                    Authoritative creator privileges. Configure initial duration; extend active rooms up to 4 hours.
+                  </p>
+                </div>
+              </div>
 
+              <div class="entry-body">
                 <!-- Dynamic Room Expiry Selector -->
                 <div class="expiry-selector-wrapper">
                   <div class="expiry-selector-label">
-                    <span>Room Lifetime</span>
-                    <span style="font-size: 0.72rem; font-weight: 600; color: var(--accent);">Auto-Destruct</span>
+                    <span>ROOM LIFETIME DURATION</span>
+                    <span style="color: var(--accent);">ABSOLUTE COUNTDOWN</span>
                   </div>
                   <div class="expiry-presets" id="expiryPresetsGroup" role="radiogroup" aria-label="Room Expiry Duration">
                     <button type="button" class="expiry-pill active" data-minutes="5" role="radio" aria-checked="true">5m</button>
@@ -2328,53 +243,62 @@
                       placeholder="15"
                       aria-label="Custom duration in minutes"
                     />
-                    <span style="font-size: 0.85rem; color: var(--text-secondary); font-weight: 600;">minutes (1 – 60 min)</span>
+                    <span style="font-family: var(--font-mono); font-size: 0.8125rem; color: var(--text-secondary);">minutes (1 – 60 min)</span>
                   </div>
                   <div class="selected-lifetime-indicator" id="selectedLifetimeIndicator">
-                    Lifetime: <strong id="lifetimeDisplayLabel" style="color: var(--accent);">5 minutes</strong> (absolute countdown)
+                    Configured Lifetime: <strong id="lifetimeDisplayLabel">5 minutes</strong> (clock ticks forward continuously)
                   </div>
                 </div>
-              </div>
-              <div>
-                <button class="neu-btn neu-btn-primary" style="width: 100%;" id="btnActionCreate">
-                  <span id="createBtnText">Create Room Now</span>
-                </button>
-                <div class="input-helper-msg" id="createStatusMsg">Browser-to-browser P2P via WebRTC</div>
+
+                <div>
+                  <button class="btn btn-primary neu-btn neu-btn-primary" style="width: 100%;" id="btnActionCreate">
+                    <span id="createBtnText">Create Room Now</span>
+                  </button>
+                  <div class="input-helper-msg" id="createStatusMsg">Browser-to-browser P2P via WebRTC</div>
+                </div>
               </div>
             </div>
 
-            <!-- Join Room Option -->
-            <div class="entry-card neu-card-interactive">
-              <div>
-                <div class="entry-icon-box" style="color: var(--success);">
-                  <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <!-- Join Room Card -->
+            <div class="entry-card">
+              <div class="entry-card-header">
+                <div class="entry-icon-box" style="color: var(--success); border-color: rgba(34, 197, 94, 0.4);">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
                     <polyline points="10 17 15 12 10 7"></polyline>
                     <line x1="15" y1="12" x2="3" y2="12"></line>
                   </svg>
                 </div>
-                <h3>Join Existing Room</h3>
-                <p>
-                  Received an invitation code from a peer? Enter the 6-character code below to enter the live room.
-                </p>
+                <div>
+                  <h3 class="entry-title">Join Existing Room</h3>
+                  <p class="entry-description">
+                    Enter the 6-character room code shared by your peer to initialize direct transport.
+                  </p>
+                </div>
               </div>
-              <div>
-                <div class="code-input-wrapper">
+
+              <div class="entry-body">
+                <div>
+                  <label for="joinCodeInput" style="display: block; font-family: var(--font-mono); font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    ROOM ACCESS CODE
+                  </label>
                   <input
                     type="text"
                     id="joinCodeInput"
                     class="neu-input neu-input-code"
-                    placeholder="K7M9Q2"
+                    placeholder="X9K4P2"
                     maxlength="6"
                     autocomplete="off"
                     spellcheck="false"
                     aria-label="6-character room code"
                   />
                 </div>
-                <button class="neu-btn neu-btn-secondary" style="width: 100%;" id="btnActionJoin">
-                  Join Room
-                </button>
-                <div class="input-helper-msg" id="joinStatusMsg">Enter 6 alphanumeric characters</div>
+                <div>
+                  <button class="btn btn-secondary neu-btn neu-btn-secondary" style="width: 100%;" id="btnActionJoin">
+                    Join Room
+                  </button>
+                  <div class="input-helper-msg" id="joinStatusMsg">Enter 6 alphanumeric characters</div>
+                </div>
               </div>
             </div>
           </div>
@@ -2386,111 +310,98 @@
     <section class="section" id="features">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>⚡</span>
-            <span>Key Advantages</span>
-          </div>
-          <h2 class="section-title">Designed for Private Simplicity</h2>
+          <div class="section-eyebrow">CAPABILITY SPECIFICATION</div>
+          <h2 class="section-title">Engineered for Ephemeral Utility</h2>
           <p class="section-description">
-            Engineered from the ground up for minimal attack surface, fast real-time broadcasting, and complete ephemerality.
+            A restrained, robust feature set built on open browser standards without invasive trackers or always-on telemetry.
           </p>
         </div>
 
         <div class="features-grid">
           <div class="feature-card">
-            <div class="feature-icon-badge">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
-            </div>
-            <h3 class="feature-title">Temporary Rooms</h3>
+            <div class="feature-num">01 / TRANSPORT</div>
+            <h3 class="feature-title">Browser-to-Browser WebRTC</h3>
             <p class="feature-text">
-              Rooms start with a 5-minute lifetime by default. The creator can choose 5, 10, 15, 20, or a custom 1–60 minutes, then extend an active room up to the 4-hour total limit.
+              Direct peer-to-peer data channels bypass central databases. Chat messages and binary document chunks flow over encrypted DTLS sockets directly between connected browser instances.
             </p>
           </div>
 
           <div class="feature-card">
-            <div class="feature-icon-badge">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
-            <h3 class="feature-title">Zero Registration</h3>
+            <div class="feature-num">02 / PRIVACY</div>
+            <h3 class="feature-title">Zero Account Registration</h3>
             <p class="feature-text">
-              No registration is required. PeerJS signaling and network operators may still see connection metadata; peer-to-peer connections can expose participants' public IP addresses to each other.
+              No user accounts, emails, or phone numbers. Ephemeral session tokens reside exclusively in URL fragment hashes (<span class="font-mono">#key=...</span>), preventing server-side leakage in HTTP referrers.
             </p>
           </div>
 
           <div class="feature-card">
-            <div class="feature-icon-badge">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="4 7 4 4 20 4 20 7"></polyline>
-                <line x1="9" y1="20" x2="15" y2="20"></line>
-                <line x1="12" y1="4" x2="12" y2="20"></line>
-              </svg>
-            </div>
-            <h3 class="feature-title">Text-Only Simplicity</h3>
+            <div class="feature-num">03 / DOCUMENTS</div>
+            <h3 class="feature-title">10 MiB Binary Transfers</h3>
             <p class="feature-text">
-              Send text messages and supported documents up to 10 MiB. Document extensions are allowlisted, but files are not malware-scanned; only download files from people you trust.
+              Native document streaming for PDF, Word, Excel, PowerPoint, Text, and OpenDocument formats. Sliced into 16 KiB chunks with backpressure throttling and zero Base64 inflation.
             </p>
           </div>
 
           <div class="feature-card">
-            <div class="feature-icon-badge">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect x="3" y="3" width="7" height="7"></rect>
-                <rect x="14" y="3" width="7" height="7"></rect>
-                <rect x="14" y="14" width="7" height="7"></rect>
-                <rect x="3" y="14" width="7" height="7"></rect>
-              </svg>
-            </div>
-            <h3 class="feature-title">Shareable Invitations</h3>
+            <div class="feature-num">04 / INTEGRITY</div>
+            <h3 class="feature-title">Cryptographic SHA-256</h3>
             <p class="feature-text">
-              Share a direct room link via the Web Share API or display a real generated SVG QR code for friends to scan on their smartphones.
+              Bit-for-bit file verification calculated in hardware via the Web Crypto API (<span class="font-mono">crypto.subtle</span>). Tampered or corrupted chunks are detected before enabling downloads.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-num">05 / LIFETIME</div>
+            <h3 class="feature-title">Absolute Auto-Destruction</h3>
+            <p class="feature-text">
+              Preset durations (5m, 10m, 15m, 20m) or custom values (1–60m). Countdown reflects absolute wall time; message activity does not prolong the session, guaranteeing timely destruction.
+            </p>
+          </div>
+
+          <div class="feature-card">
+            <div class="feature-num">06 / AUTHORITY</div>
+            <h3 class="feature-title">Creator Expiry Control</h3>
+            <p class="feature-text">
+              The room creator holds exclusive authority to extend active sessions on the fly up to a strict 4-hour ceiling. Guest interfaces synchronize time updates in real time without page reload.
             </p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- HOW IT WORKS SECTION -->
-    <section class="section" id="how-it-works" style="background: rgba(224, 229, 236, 0.4);">
+    <!-- HOW IT WORKS -->
+    <section class="section" id="how-it-works">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>🔄</span>
-            <span>User Journey</span>
-          </div>
+          <div class="section-eyebrow">PROTOCOL WALKTHROUGH</div>
           <h2 class="section-title">How It Works in 3 Steps</h2>
           <p class="section-description">
-            Zero setup, zero friction. Connect and converse in less than ten seconds.
+            Zero setup, zero configuration. Connect and converse in seconds.
           </p>
         </div>
 
         <div class="steps-grid">
           <div class="step-card">
-            <div class="step-number">1</div>
-            <h3 class="step-title">Create or Enter Code</h3>
+            <div class="step-number">01</div>
+            <h3 class="step-title">Generate or Enter Code</h3>
             <p class="step-desc">
-              Generate a unique 6-character code in 1 click, or paste an invitation code shared by a friend.
+              Generate a unique 6-character room code in 1 click, or paste an invitation code shared by a peer. Ambiguous glyphs (0, O, I, l) are strictly excluded.
             </p>
           </div>
 
           <div class="step-card">
-            <div class="step-number">2</div>
-            <h3 class="step-title">Share Room Invitation</h3>
+            <div class="step-number">02</div>
+            <h3 class="step-title">Share Invitation or QR</h3>
             <p class="step-desc">
-              Send the room link to your recipient or show the real-time QR code on your screen for mobile scanning.
+              Send the full invitation URL containing the session secret, or present the live vector QR code for instantaneous smartphone camera scanning.
             </p>
           </div>
 
           <div class="step-card">
-            <div class="step-number">3</div>
-            <h3 class="step-title">Chat & Auto-Expire</h3>
+            <div class="step-number">03</div>
+            <h3 class="step-title">Converse & Auto-Destruct</h3>
             <p class="step-desc">
-              Messages and document chunks use WebRTC data channels after a signaling handshake. Rooms expire at the configured absolute deadline; sending messages does not reset the timer.
+              WebRTC negotiates an in-memory direct channel. When the countdown reaches 00:00, all active sockets sever, in-memory Blob URLs revoke, and RAM wipes cleanly.
             </p>
           </div>
         </div>
@@ -2501,13 +412,10 @@
     <section class="section" id="walkthrough">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>📖</span>
-            <span>Feature Guide</span>
-          </div>
-          <h2 class="section-title">Product Walkthrough</h2>
+          <div class="section-eyebrow">INTERFACE GUIDE</div>
+          <h2 class="section-title">Feature Navigation</h2>
           <p class="section-description">
-            Everything you need to know about navigating Anomoly Chat effectively.
+            Essential operational details for navigating Anomoly Chat effectively.
           </p>
         </div>
 
@@ -2522,7 +430,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Creating a Room</h4>
-              <p>Click “Create Room” to start a temporary browser-led room. Share the invitation link or QR code so another browser can establish a peer connection.</p>
+              <p>Click "Create Room" to instantiate a room authority. Share the secret-bearing URL fragment to broker direct peer connectivity.</p>
             </div>
           </div>
 
@@ -2535,7 +443,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Joining via Code</h4>
-              <p>Enter the 6-character code into the Join input and hit Enter. Ambiguous characters (0, O, I, l) are automatically avoided.</p>
+              <p>Input the 6-character room identifier and press Enter. The client automatically validates code format before contacting signaling.</p>
             </div>
           </div>
 
@@ -2547,7 +455,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Sending Messages</h4>
-              <p>Press Enter to send a message, or Shift+Enter for a new line. Text is limited to 500 characters; supported documents can be transferred directly up to 10 MiB.</p>
+              <p>Press Enter to dispatch messages; Shift+Enter creates a new line. Messages are strictly capped at 500 characters and rate-limited to avoid socket flooding.</p>
             </div>
           </div>
 
@@ -2563,7 +471,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Sharing Invitations</h4>
-              <p>Use the "Share" button inside an active chat to copy the full invite URL or render a real, scannable QR code.</p>
+              <p>Click "Invite / QR" inside an active room to display the vector QR code or invoke native system share sheets via the Web Share API.</p>
             </div>
           </div>
 
@@ -2577,7 +485,7 @@
             </div>
             <div class="walkthrough-content">
               <h4>Leaving a Room</h4>
-              <p>Click "Leave Room" anytime to cleanly unbind your WebSocket and return to the landing screen with wiped local state.</p>
+              <p>Click "Leave" to cleanly sever WebRTC DataChannels, revoke in-memory object URLs, and purge conversation logs from client RAM.</p>
             </div>
           </div>
 
@@ -2589,45 +497,47 @@
               </svg>
             </div>
             <div class="walkthrough-content">
-              <h4>Inactivity Expiry</h4>
-              <p>The countdown shows the room's absolute expiry. The creator can extend an active room; messages do not reset the expiry. Browser-only expiry is not tamper-proof against a malicious client.</p>
+              <h4>Duration Extension</h4>
+              <p>The room host can click the countdown pill to open the extension popover and add +5m, +10m, +15m, +20m, or custom duration up to 4h.</p>
             </div>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- PRIVACY & SECURITY ARCHITECTURE -->
-    <section class="section" id="security" style="background: rgba(224, 229, 236, 0.4);">
+    <!-- PRIVACY & SECURITY DISCLOSURE -->
+    <section class="section" id="security">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow"><span>🛡️</span><span>Security Engineering</span></div>
-          <h2 class="section-title">Privacy & Data Architecture</h2>
-          <p class="section-description">A clear explanation of what this browser-first design does—and does not—protect.</p>
+          <div class="section-eyebrow">HONEST DISCLOSURE</div>
+          <h2 class="section-title">Privacy & Security Boundaries</h2>
+          <p class="section-description">
+            Transparent technical disclosure of what this browser-first architecture does and does not protect.
+          </p>
         </div>
-        <div class="security-box">
-          <h3>How the connection works</h3>
-          <div class="security-points-grid">
+
+        <div class="security-card">
+          <h3>Architectural Reality & Threat Model</h3>
+          <p>
+            Anomoly Chat provides ephemeral, accountless communication between cooperating browser nodes. "Anonymous" indicates zero personal account credentials or phone numbers are harvested. It does not mean undetectable across global network infrastructure.
+          </p>
+          <div class="security-grid">
             <div class="security-point">
-              <div class="security-point-icon">✓</div>
-              <div><h4>Peer-to-peer after setup</h4><p>Vercel serves the static app. PeerJS's public signaling service helps browsers exchange connection metadata. Once a WebRTC data channel opens, chat messages and document chunks travel directly between peers when network conditions allow.</p></div>
+              <span class="security-badge">IP EXPOSURE</span>
+              <p>Direct WebRTC UDP connections inherently expose public IP addresses to connected peers during ICE candidate negotiation.</p>
             </div>
             <div class="security-point">
-              <div class="security-point-icon">✓</div>
-              <div><h4>Encrypted transport</h4><p>WebRTC data channels use DTLS encryption in transit. This does not by itself verify a peer's real-world identity or make the system tamper-proof against a malicious participant.</p></div>
+              <span class="security-badge">SIGNALING</span>
+              <p>Public signaling servers (0.peerjs.com) broker initial SDP offer/answers; connection timestamps and IP metadata are observed during handshake.</p>
             </div>
             <div class="security-point">
-              <div class="security-point-icon">✓</div>
-              <div><h4>Temporary document handling</h4><p>Documents up to 10 MiB are transferred in binary chunks and checked with SHA-256 before download. The app does not intentionally upload files to its own storage or persist them in browser storage APIs.</p></div>
+              <span class="security-badge">FIREWALLS</span>
+              <p>Direct peer connections rely on STUN hole-punching. Restrictive enterprise firewalls or symmetric CGNAT may require TURN relays.</p>
             </div>
             <div class="security-point">
-              <div class="security-point-icon">✓</div>
-              <div><h4>Room lifetime controls</h4><p>Rooms have an absolute expiry, with creator-controlled extensions up to a four-hour total lifetime. Because room authority lives in a browser, these controls are not enforceable against a client that deliberately modifies its own code.</p></div>
+              <span class="security-badge">LOCAL FILES</span>
+              <p>Once a binary document is assembled and downloaded to a recipient's local disk, it cannot be remotely recalled or wiped.</p>
             </div>
-          </div>
-          <div class="honest-crypto-banner">
-            <div style="font-size: 1.3rem;">ℹ️</div>
-            <p><strong>Privacy limits:</strong> Anomoly Chat does not require an account, but it is not untraceable. Signaling and network providers can observe connection metadata; direct WebRTC peers may learn each other's public IP addresses. Some networks require a TURN relay, which is not guaranteed by the current deployment. A recipient can keep any file they download, and browser/OS internals are outside the app's complete control. Do not use this as a substitute for audited secure messaging.</p>
           </div>
         </div>
       </div>
@@ -2637,13 +547,10 @@
     <section class="section" id="faq">
       <div class="container">
         <div class="section-header">
-          <div class="section-eyebrow">
-            <span>❓</span>
-            <span>Got Questions?</span>
-          </div>
-          <h2 class="section-title">Frequently Asked Questions</h2>
+          <div class="section-eyebrow">FREQUENTLY ASKED QUESTIONS</div>
+          <h2 class="section-title">Common Questions</h2>
           <p class="section-description">
-            Clear answers to common questions about room codes, expiration, and privacy.
+            Direct, factual answers concerning room lifetimes, cryptography, and protocol limits.
           </p>
         </div>
 
@@ -2651,48 +558,40 @@
           <div class="faq-item">
             <button class="faq-question">
               <span>Can strangers guess my room code?</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <span class="faq-icon">+</span>
             </button>
             <div class="faq-answer">
-              Room codes are six characters and avoid visually ambiguous symbols. They are not a substitute for strong authentication, and the browser-first design cannot guarantee server-side rate limiting against a malicious client. Share invitation links only with people you intend to invite.
+              Room codes are 6 characters generated from a 32-character unambiguous charset (32^6 = 1,073,741,824 combinations). Additionally, full URLs contain a cryptographic 128-bit session secret in the URL hash (#key=...) that is never transmitted to web servers in HTTP requests.
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span>When does the 5-minute countdown reset?</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <span>Does typing or sending messages reset the countdown?</span>
+              <span class="faq-icon">+</span>
             </button>
             <div class="faq-answer">
-              The default lifetime is 5 minutes, but the creator can choose 5, 10, 15, 20, or a custom 1–60 minute lifetime. The countdown is an absolute expiry and does not reset when messages are sent. The creator can extend an active room, subject to the four-hour total limit.
+              No. Anomoly Chat enforces an absolute expiration model (remainingMs = expiresAt - Date.now()). Message activity does not reset the lifespan. Only the room creator can authoritatively extend active sessions using the creator extension popover.
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span>Can I upload images or send audio clips?</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <span>What document formats and file sizes are supported?</span>
+              <span class="faq-icon">+</span>
             </button>
             <div class="faq-answer">
-              Yes, supported document formats can be transferred directly between connected peers, up to 10 MiB per file. The app checks the filename extension and verifies a SHA-256 digest, but it does not scan documents for malware. Only accept files from people you trust.
+              Common document formats (.pdf, .docx, .doc, .xlsx, .xls, .pptx, .ppt, .txt, .rtf, .odt, .ods, .odp) up to strictly 10 MiB (10,485,760 bytes). Files are sliced into 16 KiB chunks, transferred via ArrayBuffer, and validated bit-for-bit against a sender-computed SHA-256 digest.
             </div>
           </div>
 
           <div class="faq-item">
             <button class="faq-question">
-              <span>What happens if I refresh or accidentally close my tab?</span>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <span>What happens if the room host closes their browser tab?</span>
+              <span class="faq-icon">+</span>
             </button>
             <div class="faq-answer">
-              The creator's browser acts as the room authority. If the creator closes the tab or loses connectivity, the room may end for everyone. Refreshing or reconnecting is not guaranteed to restore a room; use a fresh invitation and test the actual connection state.
+              Because the room creator acts as the authoritative coordination node, closing the host's tab severs the WebRTC connection. When the connection closes, guest nodes enter disconnected status and local in-memory state is cleared.
             </div>
           </div>
         </div>
@@ -2700,31 +599,35 @@
     </section>
 
     <!-- FOOTER -->
-    <footer class="footer">
+    <footer class="site-footer">
       <div class="container">
         <div class="footer-grid">
           <div class="footer-brand">
-            <div class="nav-brand">
-              <div class="brand-icon">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  <circle cx="9" cy="10" r="1" fill="currentColor"></circle>
-                  <circle cx="15" cy="10" r="1" fill="currentColor"></circle>
-                </svg>
-              </div>
-              <span class="brand-text">Anomoly Chat</span>
-            </div>
+            <h4>ANOMOLY CHAT</h4>
             <p class="footer-tagline">
-              Temporary, accountless conversations and direct document sharing. No account required; read the privacy limits before sharing sensitive information.
+              Accountless peer-to-peer communication and verifiable document transfers using WebRTC DataChannels and client-side cryptography.
             </p>
           </div>
 
-          <div class="footer-nav">
-            <a href="#features" class="footer-link">Features</a>
-            <a href="#how-it-works" class="footer-link">How It Works</a>
-            <a href="#walkthrough" class="footer-link">Walkthrough</a>
-            <a href="#security" class="footer-link">Privacy & Security</a>
-            <a href="#faq" class="footer-link">FAQ</a>
+          <div class="footer-col">
+            <h5>Navigation</h5>
+            <ul class="footer-links-list">
+              <li><a href="#start" class="footer-link">Rooms</a></li>
+              <li><a href="#features" class="footer-link">Features</a></li>
+              <li><a href="#how-it-works" class="footer-link">Architecture</a></li>
+              <li><a href="#security" class="footer-link">Privacy & Security</a></li>
+              <li><a href="#faq" class="footer-link">FAQ</a></li>
+            </ul>
+          </div>
+
+          <div class="footer-col">
+            <h5>Open Source</h5>
+            <ul class="footer-links-list">
+              <li><a href="https://github.com/skandachandrashekar335-wq/anomoly-chat" target="_blank" rel="noopener noreferrer" class="footer-link">GitHub Repository</a></li>
+              <li><a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="footer-link">Apache 2.0 License</a></li>
+              <li><a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer" class="footer-link">Security Policy</a></li>
+              <li><a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noopener noreferrer" class="footer-link">Architecture Docs</a></li>
+            </ul>
           </div>
         </div>
 
@@ -2732,15 +635,12 @@
           <div>
             &copy; <span id="currentYear">2026</span> Anomoly Chat. Released for educational software development.
           </div>
-          <div class="student-note">
-            <span>🎓</span>
-            <span>BCA Learning Project • Vanilla JS & WebRTC P2P</span>
-            <span aria-hidden="true">·</span>
-            <a href="https://github.com/skandachandrashekar335-wq/anomoly-chat" target="_blank" rel="noopener noreferrer">GitHub</a>
-            <span aria-hidden="true">·</span>
-            <a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/blob/main/LICENSE" target="_blank" rel="noopener noreferrer">Apache-2.0 License</a>
-            <span aria-hidden="true">·</span>
-            <a href="https://github.com/skandachandrashekar335-wq/anomoly-chat/blob/main/SECURITY.md" target="_blank" rel="noopener noreferrer">Privacy & Security</a>
+          <div class="footer-legal-links">
+            <span>BCA Learning Project</span>
+            <span>·</span>
+            <span>WebRTC P2P</span>
+            <span>·</span>
+            <span>Vanilla TypeScript & JS</span>
           </div>
         </div>
       </div>
@@ -2756,8 +656,8 @@
         <!-- Chat Header -->
         <div class="chat-panel-header">
           <div class="chat-room-info">
-            <button class="neu-btn neu-btn-secondary neu-btn-sm" id="btnLeaveRoom" title="Leave room and return home">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <button class="btn btn-secondary btn-sm neu-btn neu-btn-secondary neu-btn-sm" id="btnLeaveRoom" title="Leave room and return home">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
                 <polyline points="16 17 21 12 16 7"></polyline>
                 <line x1="21" y1="12" x2="9" y2="12"></line>
@@ -2766,7 +666,7 @@
             </button>
             <button class="room-badge-btn" id="btnCopyRoomCode" title="Click to copy room code">
               <span id="activeRoomCodeLabel">CODE</span>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
               </svg>
@@ -2776,11 +676,11 @@
           <div class="chat-status-badges">
             <div class="status-pill waiting" id="pillP2PStatus" title="WebRTC Direct P2P Status">
               <span>●</span>
-              <span id="labelP2PStatus">P2P Initializing</span>
+              <span id="labelP2PStatus">P2P INITIALIZING</span>
             </div>
             <div class="status-pill online" id="pillParticipants">
               <span>●</span>
-              <span id="labelParticipants">1 Online</span>
+              <span id="labelParticipants">1 ONLINE</span>
             </div>
             <div class="status-pill timer" id="pillCountdown" title="Auto-expires when inactive">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -2792,7 +692,7 @@
           </div>
 
           <div class="chat-header-actions">
-            <button class="neu-btn neu-btn-primary neu-btn-sm" id="btnOpenShareModal">
+            <button class="btn btn-primary btn-sm neu-btn neu-btn-primary neu-btn-sm" id="btnOpenShareModal">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="18" cy="5" r="3"></circle>
                 <circle cx="6" cy="12" r="3"></circle>
@@ -2810,8 +710,8 @@
               <h4>Extend Room Duration</h4>
               <button type="button" class="expiry-popover-close" id="btnCloseExpiryExt" aria-label="Close extension popover">&times;</button>
             </div>
-            <p style="font-size: 0.78rem; color: var(--text-secondary); margin-bottom: 0.65rem;">
-              Room Creator: add time for all connected participants.
+            <p style="font-family: var(--font-mono); font-size: 0.72rem; color: var(--text-secondary); margin-bottom: 0.75rem;">
+              Host privilege: synchronize additional duration across all connected peers.
             </p>
             <div class="expiry-ext-presets" id="expiryExtPresets" role="radiogroup" aria-label="Extension presets">
               <button type="button" class="expiry-ext-pill active" data-ext="5" role="radio" aria-checked="true">+5m</button>
@@ -2820,7 +720,7 @@
               <button type="button" class="expiry-ext-pill" data-ext="20" role="radio" aria-checked="false">+20m</button>
               <button type="button" class="expiry-ext-pill" data-ext="custom" role="radio" aria-checked="false">Custom</button>
             </div>
-            <div class="custom-ext-input-wrap" id="customExtInputWrap" style="display: none;">
+            <div class="custom-ext-input-wrap" id="customExtInputWrap" style="display: none; margin-bottom: 0.75rem;">
               <div style="display: flex; align-items: center; gap: 0.5rem;">
                 <input
                   type="number"
@@ -2831,38 +731,38 @@
                   value="15"
                   placeholder="15"
                   aria-label="Custom extension in minutes"
-                  style="width: 72px; height: 36px;"
+                  style="width: 72px; padding: 0.4rem;"
                 />
-                <span style="font-size: 0.82rem; color: var(--text-secondary); font-weight: 600;">minutes (1 – 60m)</span>
+                <span style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-secondary);">minutes (1 – 60m)</span>
               </div>
             </div>
-            <div class="expiry-ext-preview" id="expiryExtPreview">
+            <div class="expiry-ext-preview" id="expiryExtPreview" style="font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.75rem;">
               Extension: <strong id="extAmountDisplay" style="color: var(--accent);">+5 minutes</strong><br />
-              <span id="extNewTimeDisplay" style="font-size: 0.74rem; color: var(--text-muted);">New expiry: calculating...</span>
+              <span id="extNewTimeDisplay" style="color: var(--text-muted);">New expiry: calculating...</span>
             </div>
-            <button type="button" class="neu-btn neu-btn-primary neu-btn-sm" style="width: 100%;" id="btnConfirmExtend">
+            <button type="button" class="btn btn-primary btn-sm neu-btn neu-btn-primary neu-btn-sm" style="width: 100%;" id="btnConfirmExtend">
               Apply Extension
             </button>
           </div>
         </div>
 
-        <!-- Live P2P Connection Status Banner -->
+        <!-- Chat Status Banner -->
         <div class="chat-status-banner" id="chatStatusBanner" style="display: none;">
-          <span id="chatStatusBannerText">Connecting directly to peer via WebRTC...</span>
-          <button id="btnDismissBanner" style="background:none; border:none; cursor:pointer; font-size:1.1rem; line-height:1; color:inherit;" aria-label="Dismiss">&times;</button>
+          <span id="chatStatusBannerText">Status notification</span>
+          <button type="button" class="btn-dismiss-banner" id="btnDismissBanner" aria-label="Dismiss banner">&times;</button>
         </div>
 
         <!-- Messages Area -->
-        <div class="chat-messages-area" id="chatMessagesArea">
+        <div class="chat-messages" id="chatMessagesArea">
           <div class="chat-empty-state" id="chatEmptyState">
-            <div class="empty-state-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <div class="chat-empty-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
               </svg>
             </div>
-            <h3>Room is Ready</h3>
+            <h3>Room Initialized</h3>
             <p>
-              You're in an isolated room. Share your room code or invitation link to begin chatting.
+              Direct WebRTC data channel ready. Share your room code or invitation link to begin conversing.
             </p>
           </div>
         </div>
@@ -2874,8 +774,8 @@
             <div class="attachment-preview-info">
               <span class="attachment-type-badge" id="attachmentTypeBadge">PDF</span>
               <div class="attachment-details">
-                <span class="attachment-file-name" id="attachmentFileName">document.pdf</span>
-                <span class="attachment-file-size" id="attachmentFileSize">1.2 MB</span>
+                <span class="attachment-file-name" id="attachmentFileName" style="font-weight: 600; font-size: 0.8125rem;">document.pdf</span>
+                <span class="attachment-file-size" id="attachmentFileSize" style="font-family: var(--font-mono); font-size: 0.6875rem; color: var(--text-muted); margin-left: 0.5rem;">1.2 MB</span>
               </div>
             </div>
             <button type="button" class="attachment-cancel-btn" id="btnCancelAttachment" title="Remove attachment" aria-label="Remove attachment">&times;</button>
@@ -2905,7 +805,7 @@
               />
               <div class="char-limit-indicator" id="charLimitIndicator">0/500</div>
             </div>
-            <button type="submit" class="neu-btn neu-btn-primary" id="btnSendMessage" aria-label="Send message">
+            <button type="submit" class="btn btn-primary neu-btn neu-btn-primary" id="btnSendMessage" aria-label="Send message" style="padding: 0 1.25rem;">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="22" y1="2" x2="11" y2="13"></line>
                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
@@ -2929,9 +829,9 @@
         </svg>
       </button>
 
-      <h3>Invite to Room</h3>
-      <p style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 0.35rem;">
-        Scan this QR code on a smartphone or share the direct link.
+      <h3 style="font-size: 1.25rem; font-weight: 700;">Invite Peer to Room</h3>
+      <p style="color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.35rem;">
+        Scan this vector QR code on any mobile device or copy the direct invitation link.
       </p>
 
       <div class="qr-frame">
@@ -2943,10 +843,10 @@
       </div>
 
       <div style="display: flex; gap: 0.75rem; justify-content: center;">
-        <button class="neu-btn neu-btn-primary neu-btn-sm" id="btnModalCopyLink">
+        <button class="btn btn-primary btn-sm neu-btn neu-btn-primary neu-btn-sm" id="btnModalCopyLink">
           Copy Link
         </button>
-        <button class="neu-btn neu-btn-secondary neu-btn-sm" id="btnModalNativeShare">
+        <button class="btn btn-secondary btn-sm neu-btn neu-btn-secondary neu-btn-sm" id="btnModalNativeShare">
           Share...
         </button>
       </div>
@@ -2960,6 +860,7 @@
        VANILLA JAVASCRIPT APPLICATION CONTROLLER — BROWSER-FIRST WEBRTC P2P
        ========================================================================== -->
   <script>
+
     (function () {
       "use strict";
 

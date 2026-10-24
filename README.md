@@ -49,7 +49,7 @@
 - **Creator-Controlled Extensions**: The room creator (Host) can authoritatively extend active rooms within a strict **4-hour lifetime ceiling**, synchronizing guest countdowns in real time without page reloads.
 - **Client-Side QR Code Invitations**: QR codes are generated directly in the browser via `qrcode.min.js`.
 - **URL Hash Privacy**: Session keys and expiration timestamps are stored exclusively in the URL fragment hash (`#key=...&exp=...`). Browsers **never send URL fragments in HTTP request headers or referrers**.
-- **Tactile Neumorphism UI**: Soft-UI design system fully responsive across 1440px desktop, 768px tablet, and 390px mobile viewports.
+- **Warm Industrial UI**: Architectural design system featuring warm tactile surfaces (`#EBEBE8`), structural borders, subtle noise and architectural grid overlays, and electric blue accents, responsive across 1440px desktop, 768px tablet, and 390px mobile viewports.
 - **Zero Server Storage**: Hosted as static assets on Vercel's Edge CDN. No central database storing chat history or file contents.
 
 > [!NOTE]
@@ -84,12 +84,12 @@ flowchart TD
 
     subgraph PeerA["Browser A (Host / Creator)"]
         HostState["In-Memory Room State<br/>• 6-char Room Code<br/>• Session Secret (#key)<br/>• Absolute Expiry (#exp)"]
-        HostUI["Neumorphism Chat UI<br/>• Creator Timer Extension Popover<br/>• 16 KiB Slicer & SHA-256 Engine"]
+        HostUI["Warm Industrial Chat UI<br/>• Creator Timer Extension Popover<br/>• 16 KiB Slicer & SHA-256 Engine"]
     end
 
     subgraph PeerB["Browser B (Guest / Participant)"]
         GuestState["In-Memory Guest State<br/>• Synchronized Countdown<br/>• Read-Only Privileges"]
-        GuestUI["Neumorphism Chat UI<br/>• Binary Chunk Reassembly<br/>• SHA-256 Verifier & Blob Creator"]
+        GuestUI["Warm Industrial Chat UI<br/>• Binary Chunk Reassembly<br/>• SHA-256 Verifier & Blob Creator"]
     end
 
     EdgeCDN -->|"HTTP GET /"| PeerA
@@ -123,7 +123,7 @@ For full sequence diagrams, protocol specifications, backpressure algorithms, an
 
 | Layer | Technology | Purpose & Rationale |
 | :--- | :--- | :--- |
-| **Frontend UI** | Vanilla HTML5, CSS3, ES2022 | Lightweight, zero-framework runtime with Neumorphic design tokens. |
+| **Frontend UI** | Vanilla HTML5, CSS3, ES2022 | Lightweight, zero-framework runtime with Warm Industrial design tokens. |
 | **P2P Networking** | WebRTC `RTCDataChannel` | Direct peer-to-peer transport with DTLS transport encryption. |
 | **Signaling** | `peerjs` (bundled static 85KB) | Brokers initial SDP offer/answer exchange via secure WebSockets. |
 | **QR Generation** | `qrcode` (bundled static 24KB) | Fast, client-side vector/canvas QR generation without external APIs. |

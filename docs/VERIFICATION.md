@@ -95,7 +95,7 @@ Genuine screenshots generated directly from running application sessions are tra
 
 | File | Description | Resolution / Viewport |
 | :--- | :--- | :--- |
-| [`desktop-home.png`](screenshots/desktop-home.png) | Desktop landing page with Neumorphism hero and feature cards | 1440 × 900 px |
+| [`desktop-home.png`](screenshots/desktop-home.png) | Desktop landing page with Warm Industrial hero and feature cards | 1440 × 900 px |
 | [`desktop-full-page.png`](screenshots/desktop-full-page.png) | Complete full-height desktop landing page from navigation to footer | 1440 px full-page |
 | [`mobile-home.png`](screenshots/mobile-home.png) | Mobile viewport layout with zero horizontal overflow | 390 × 844 px |
 | [`room-creation.png`](screenshots/room-creation.png) | Interactive room creation card with expiry duration presets and custom slider | 1440 × 900 px |
