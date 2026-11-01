@@ -46,10 +46,11 @@
 - **Binary Document Transfer (Up to 10 MiB)**: Share PDF, Word, Excel, PowerPoint, Text, RTF, and OpenDocument files in **16 KiB binary chunks** via `ArrayBuffer` without Base64 inflation.
 - **Cryptographic Integrity**: Received files are verified bit-for-bit against a sender-computed **SHA-256 digest** (`crypto.subtle.digest`) before the download link is enabled.
 - **Dynamic Absolute Room Expiry**: Choose 5m (default), 10m, 15m, 20m, or custom 1–60 minutes. The countdown measures absolute time (`createdAt + lifetimeMs`), remaining impervious to message activity resets.
-- **Creator-Controlled Extensions**: The room creator (Host) can authoritatively extend active rooms within a strict **4-hour lifetime ceiling**, synchronizing guest countdowns in real time without page reloads.
+- **Smart Room Expiry Warning System**: Synchronized multi-participant alert banners at 5m (heads-up), 2m (notice), 1m (prominent alert with Host 'Extend Room' CTA), 30s (urgent pulse), and 10s (dynamic final countdown) with resilient background tab recalculation and graceful expiry teardown.
+- **Creator-Controlled Extensions**: The room creator (Host) can authoritatively extend active rooms within a strict **4-hour lifetime ceiling**, synchronizing guest countdowns in real time and dismissing outdated warnings.
 - **Client-Side QR Code Invitations**: QR codes are generated directly in the browser via `qrcode.min.js`.
 - **URL Hash Privacy**: Session keys and expiration timestamps are stored exclusively in the URL fragment hash (`#key=...&exp=...`). Browsers **never send URL fragments in HTTP request headers or referrers**.
-- **Warm Industrial UI**: Architectural design system featuring warm tactile surfaces (`#EBEBE8`), structural borders, subtle noise and architectural grid overlays, and electric blue accents, responsive across 1440px desktop, 768px tablet, and 390px mobile viewports.
+- **Complete Mobile & Multi-Viewport Compatibility**: Reorganized mobile header, 44px touch targets, dynamic viewport height (`100dvh`), bottom-sheet creator popovers, and iOS auto-zoom prevention verified across 7 viewports (320×700, 375×812, 390×844, 430×932, 768×1024, 1280×800, 1440×900) with zero horizontal overflow.
 - **Zero Server Storage**: Hosted as static assets on Vercel's Edge CDN. No central database storing chat history or file contents.
 
 > [!NOTE]
@@ -128,7 +129,7 @@ For full sequence diagrams, protocol specifications, backpressure algorithms, an
 | **Signaling** | `peerjs` (bundled static 85KB) | Brokers initial SDP offer/answer exchange via secure WebSockets. |
 | **QR Generation** | `qrcode` (bundled static 24KB) | Fast, client-side vector/canvas QR generation without external APIs. |
 | **Cryptography** | Web Crypto API (`crypto.subtle`) | Native browser SHA-256 digest calculation for binary document integrity. |
-| **Testing** | Node.js Test Runner (`node:test`) | Built-in zero-dependency unit and protocol test suite (40 tests). |
+| **Testing** | Node.js Test Runner (`node:test`) | Built-in zero-dependency unit and protocol test suite (48 tests across 10 suites). |
 | **Browser E2E** | Playwright Chromium | Headless browser smoke tests, responsive overflow checks, and screenshots. |
 | **Hosting & CI** | Vercel CDN & GitHub Actions | Static edge hosting with automated CI on every push and pull request. |
 
@@ -185,6 +186,7 @@ The repository maintains **40 automated tests** in [`src/index.test.ts`](src/ind
 - **WebRTC Protocol Suite (7 tests)**: Preset durations, custom bounds (1–60m), absolute expiration math, URL hash fragment parsing, XSS textContent safety.
 - **Feature 1 — Document Sharing Engine (10 tests)**: Empty file rejection, strict 10 MiB limit enforcement, allowlist validation (`.pdf`, `.docx`, `.xlsx`, `.txt`, `.rtf`, etc.), executable extension blocking, filename path traversal sanitization, 16 KiB chunk boundary calculations, SHA-256 binary reassembly verification, corrupted payload detection.
 - **Feature 2 — Creator-Controlled Expiry Extension (5 tests)**: Presets (+5m, +10m, +15m, +20m), custom duration clamping (1–60m), expired room lockout, 4-hour lifetime ceiling enforcement, Host-only authorization validation.
+- **Feature 3 — Smart Room Expiry Warning System (8 tests)**: 5m heads-up, 2m notice, 1m prominent banner with Host extend CTA, 30s urgent pulse, 10s dynamic countdown, terminal expired cleanup, ceiling protection.
 
 For reproducible commands, checklists, and test limitations, see [`docs/VERIFICATION.md`](docs/VERIFICATION.md).
 

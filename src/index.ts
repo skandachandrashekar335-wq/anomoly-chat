@@ -244,6 +244,99 @@ export function validateExtensionAuthorization(
   return isSenderHostConnection;
 }
 
+export type ExpiryWarningTier = "5m" | "2m" | "1m" | "30s" | "10s" | "expired" | null;
+
+export interface ExpiryWarningState {
+  tier: ExpiryWarningTier;
+  remainingMs: number;
+  message: string;
+  isUrgent: boolean;
+  canExtend: boolean;
+}
+
+export function evaluateExpiryWarning(
+  remainingMs: number,
+  isHost: boolean,
+  currentCeilingReached: boolean = false
+): ExpiryWarningState {
+  if (remainingMs <= 0) {
+    return {
+      tier: "expired",
+      remainingMs: 0,
+      message: "⚠️ This room has expired. All peer connections closed and data wiped.",
+      isUrgent: true,
+      canExtend: false,
+    };
+  }
+
+  const seconds = Math.ceil(remainingMs / 1000);
+  const canExtend = isHost && !currentCeilingReached;
+
+  if (remainingMs <= 10_000) {
+    return {
+      tier: "10s",
+      remainingMs,
+      message: `⚠️ Final countdown: Room expires in ${seconds}s!`,
+      isUrgent: true,
+      canExtend,
+    };
+  }
+
+  if (remainingMs <= 30_000) {
+    return {
+      tier: "30s",
+      remainingMs,
+      message: isHost
+        ? "⚠️ Urgent: Room expires in 30 seconds! Finish or extend now."
+        : "⚠️ Urgent: Room expires in 30 seconds!",
+      isUrgent: true,
+      canExtend,
+    };
+  }
+
+  if (remainingMs <= 60_000) {
+    return {
+      tier: "1m",
+      remainingMs,
+      message: isHost
+        ? "Your room expires in 1 minute. Finish your conversation or extend the room."
+        : "Your room expires in 1 minute. Finish your conversation before the room self-destructs.",
+      isUrgent: true,
+      canExtend,
+    };
+  }
+
+  if (remainingMs <= 120_000) {
+    return {
+      tier: "2m",
+      remainingMs,
+      message: isHost
+        ? "Warning: Room expires in 2 minutes. Wrap up or extend room duration."
+        : "Warning: Room expires in 2 minutes.",
+      isUrgent: false,
+      canExtend,
+    };
+  }
+
+  if (remainingMs <= 300_000) {
+    return {
+      tier: "5m",
+      remainingMs,
+      message: "Notice: Room expires in 5 minutes.",
+      isUrgent: false,
+      canExtend,
+    };
+  }
+
+  return {
+    tier: null,
+    remainingMs,
+    message: "",
+    isUrgent: false,
+    canExtend: false,
+  };
+}
+
 // ----- Server Application Setup ----------------------------------------------
 
 export function createAppServer(port?: number) {

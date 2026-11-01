@@ -49,6 +49,9 @@ jobs:
       - name: Run interaction test suite
         run: npm run test:interactions
 
+      - name: Run smart room expiry warning tests
+        run: npm run test:expiry
+
       - name: Run browser smoke tests & screenshot capture
         run: npm run test:smoke
 

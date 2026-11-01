@@ -21,6 +21,7 @@ import {
   calculateSha256,
   calculateCreatorExtension,
   validateExtensionAuthorization,
+  evaluateExpiryWarning,
 } from "./index";
 
 function wait(ms: number) {
@@ -744,6 +745,94 @@ describe("Anomoly Chat Server Test Suite", () => {
 
       // Guest receives expiry extension from another guest / fake connection -> Unauthorized
       assert.equal(validateExtensionAuthorization(false, false), false);
+    });
+  });
+
+  describe("Feature 3 — Smart Room Expiry Warning System Suite", () => {
+    it("returns null tier when room has > 5 minutes remaining", () => {
+      const state = evaluateExpiryWarning(301_000, true);
+      assert.equal(state.tier, null);
+      assert.equal(state.isUrgent, false);
+      assert.equal(state.canExtend, false);
+    });
+
+    it("evaluates 5-minute subtle warning threshold", () => {
+      const hostState = evaluateExpiryWarning(300_000, true);
+      assert.equal(hostState.tier, "5m");
+      assert.equal(hostState.isUrgent, false);
+      assert.equal(hostState.canExtend, true);
+      assert.ok(hostState.message.includes("5 minutes"));
+
+      const guestState = evaluateExpiryWarning(250_000, false);
+      assert.equal(guestState.tier, "5m");
+      assert.equal(guestState.canExtend, false);
+    });
+
+    it("evaluates 2-minute clear warning banner threshold", () => {
+      const hostState = evaluateExpiryWarning(120_000, true);
+      assert.equal(hostState.tier, "2m");
+      assert.equal(hostState.isUrgent, false);
+      assert.equal(hostState.canExtend, true);
+      assert.ok(hostState.message.includes("2 minutes"));
+
+      const guestState = evaluateExpiryWarning(90_000, false);
+      assert.equal(guestState.tier, "2m");
+      assert.equal(guestState.canExtend, false);
+    });
+
+    it("evaluates 1-minute prominent warning banner threshold", () => {
+      const hostState = evaluateExpiryWarning(60_000, true);
+      assert.equal(hostState.tier, "1m");
+      assert.equal(hostState.isUrgent, true);
+      assert.equal(hostState.canExtend, true);
+      assert.ok(hostState.message.includes("extend the room"));
+
+      const guestState = evaluateExpiryWarning(45_000, false);
+      assert.equal(guestState.tier, "1m");
+      assert.equal(guestState.canExtend, false);
+      assert.ok(guestState.message.includes("before the room self-destructs"));
+    });
+
+    it("evaluates 30-second urgent warning threshold", () => {
+      const hostState = evaluateExpiryWarning(30_000, true);
+      assert.equal(hostState.tier, "30s");
+      assert.equal(hostState.isUrgent, true);
+      assert.equal(hostState.canExtend, true);
+      assert.ok(hostState.message.includes("30 seconds"));
+
+      const guestState = evaluateExpiryWarning(20_000, false);
+      assert.equal(guestState.tier, "30s");
+      assert.equal(guestState.canExtend, false);
+    });
+
+    it("evaluates 10-second dynamic final countdown threshold", () => {
+      const state10 = evaluateExpiryWarning(10_000, true);
+      assert.equal(state10.tier, "10s");
+      assert.equal(state10.isUrgent, true);
+      assert.ok(state10.message.includes("10s"));
+
+      const state3 = evaluateExpiryWarning(2_800, false);
+      assert.equal(state3.tier, "10s");
+      assert.equal(state3.isUrgent, true);
+      assert.ok(state3.message.includes("3s"));
+    });
+
+    it("evaluates expired state cleanly with zero extension privilege", () => {
+      const expiredState = evaluateExpiryWarning(0, true);
+      assert.equal(expiredState.tier, "expired");
+      assert.equal(expiredState.remainingMs, 0);
+      assert.equal(expiredState.canExtend, false);
+      assert.ok(expiredState.message.includes("expired"));
+
+      const negativeState = evaluateExpiryWarning(-5000, true);
+      assert.equal(negativeState.tier, "expired");
+      assert.equal(negativeState.canExtend, false);
+    });
+
+    it("prevents extension even for Host if 4-hour ceiling is reached", () => {
+      const state = evaluateExpiryWarning(60_000, true, true);
+      assert.equal(state.tier, "1m");
+      assert.equal(state.canExtend, false, "canExtend must be false when 4-hour ceiling is reached");
     });
   });
 });

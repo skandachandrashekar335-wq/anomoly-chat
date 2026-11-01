@@ -757,6 +757,23 @@ const html = `<!DOCTYPE html>
           <button type="button" class="btn-dismiss-banner" id="btnDismissBanner" aria-label="Dismiss banner">&times;</button>
         </div>
 
+        <!-- Smart Room Expiry Warning System Banner -->
+        <div class="smart-expiry-warning" id="smartExpiryWarning" style="display: none;" role="alert" aria-live="assertive">
+          <div class="expiry-warning-content">
+            <div class="expiry-warning-badge" id="expiryWarningBadge">EXPIRY WARNING</div>
+            <div class="expiry-warning-text-wrap">
+              <span class="expiry-warning-headline" id="expiryWarningHeadline">Room Expiring Soon</span>
+              <span class="expiry-warning-msg" id="expiryWarningMsg">Your room expires in 1 minute. Finish your conversation or extend the room.</span>
+            </div>
+          </div>
+          <div class="expiry-warning-actions">
+            <button type="button" class="btn btn-primary btn-sm neu-btn neu-btn-primary neu-btn-sm btn-warning-extend" id="btnWarningExtend" style="display: none;">
+              Extend Room
+            </button>
+            <button type="button" class="expiry-warning-dismiss" id="btnDismissWarning" aria-label="Dismiss warning">&times;</button>
+          </div>
+        </div>
+
         <!-- Messages Area -->
         <div class="chat-messages" id="chatMessagesArea">
           <div class="chat-empty-state" id="chatEmptyState">
@@ -865,8 +882,7 @@ const html = `<!DOCTYPE html>
        VANILLA JAVASCRIPT APPLICATION CONTROLLER — BROWSER-FIRST WEBRTC P2P
        ========================================================================== -->
   <script>
-` + jsController + `
-  </script>
+` + jsController + `</script>
 </body>
 </html>
 `;

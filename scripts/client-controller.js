@@ -81,6 +81,18 @@
       var btnModalNativeShare = document.getElementById("btnModalNativeShare");
       var appToast = document.getElementById("appToast");
 
+      // ----- Smart Expiry Warning Selectors ----------------------------------
+      var smartExpiryWarning = document.getElementById("smartExpiryWarning");
+      var expiryWarningBadge = document.getElementById("expiryWarningBadge");
+      var expiryWarningHeadline = document.getElementById("expiryWarningHeadline");
+      var expiryWarningMsg = document.getElementById("expiryWarningMsg");
+      var btnWarningExtend = document.getElementById("btnWarningExtend");
+      var btnDismissWarning = document.getElementById("btnDismissWarning");
+
+      var lastWarningTier = null;
+      var userDismissedTier = null;
+      var isRoomExpiredState = false;
+
       // ----- Document Attachment Selectors -----------------------------------
       var btnAttachDocument = document.getElementById("btnAttachDocument");
       var fileAttachmentInput = document.getElementById("fileAttachmentInput");
@@ -637,6 +649,26 @@
             applyCreatorExtension();
           });
         }
+
+        if (btnWarningExtend) {
+          btnWarningExtend.addEventListener("click", function (e) {
+            e.stopPropagation();
+            if (!isHost || isRoomExpiredState) return;
+            var isOpen = expiryExtensionPopover.style.display === "block";
+            expiryExtensionPopover.style.display = isOpen ? "none" : "block";
+            if (!isOpen) {
+              updateExtensionPreview();
+            }
+          });
+        }
+
+        if (btnDismissWarning) {
+          btnDismissWarning.addEventListener("click", function (e) {
+            e.stopPropagation();
+            if (smartExpiryWarning) smartExpiryWarning.style.display = "none";
+            userDismissedTier = lastWarningTier;
+          });
+        }
       }
 
       function updateExtensionPreview() {
@@ -680,6 +712,15 @@
         }
 
         roomExpiresAt = target;
+        isRoomExpiredState = false;
+        lastWarningTier = null;
+        userDismissedTier = null;
+        if (smartExpiryWarning) smartExpiryWarning.style.display = "none";
+        if (messageTextInput) messageTextInput.disabled = false;
+        if (btnSendMessage) btnSendMessage.disabled = false;
+        if (btnAttachDocument) btnAttachDocument.disabled = false;
+        if (fileAttachmentInput) fileAttachmentInput.disabled = false;
+
         startAbsoluteCountdown(roomExpiresAt);
         updateInviteModalData(activeRoomCode, sessionKey, roomExpiresAt);
         window.history.replaceState(null, "", getShareUrl(activeRoomCode, sessionKey, roomExpiresAt));
@@ -1236,6 +1277,10 @@
             cancelTransfer(data.transferId, false);
             break;
 
+          case "room_expired":
+            handleRoomExpiration();
+            break;
+
           case "expiry_extension":
             if (conn !== hostConnection) {
               console.warn("[Guest] Expiry extension received from non-host peer, ignored.");
@@ -1245,6 +1290,15 @@
               return;
             }
             roomExpiresAt = data.newExpiresAt;
+            isRoomExpiredState = false;
+            lastWarningTier = null;
+            userDismissedTier = null;
+            if (smartExpiryWarning) smartExpiryWarning.style.display = "none";
+            if (messageTextInput) messageTextInput.disabled = false;
+            if (btnSendMessage) btnSendMessage.disabled = false;
+            if (btnAttachDocument) btnAttachDocument.disabled = false;
+            if (fileAttachmentInput) fileAttachmentInput.disabled = false;
+
             startAbsoluteCountdown(roomExpiresAt);
             var hashParts = [];
             if (sessionKey) hashParts.push("key=" + encodeURIComponent(sessionKey));
@@ -1312,6 +1366,14 @@
         if (fileAttachmentInput) fileAttachmentInput.value = "";
         if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
 
+        // Reset warning state
+        isRoomExpiredState = false;
+        lastWarningTier = null;
+        userDismissedTier = null;
+        if (smartExpiryWarning) smartExpiryWarning.style.display = "none";
+        if (btnAttachDocument) btnAttachDocument.disabled = false;
+        if (fileAttachmentInput) fileAttachmentInput.disabled = false;
+
         startAbsoluteCountdown(expiresAt);
         updateInviteModalData(code, sessionKey, expiresAt);
         window.scrollTo(0, 0);
@@ -1345,6 +1407,12 @@
         if (fileAttachmentInput) fileAttachmentInput.value = "";
         if (attachmentPreviewBar) attachmentPreviewBar.style.display = "none";
         if (expiryExtensionPopover) expiryExtensionPopover.style.display = "none";
+
+        // Reset warning UI
+        isRoomExpiredState = false;
+        lastWarningTier = null;
+        userDismissedTier = null;
+        if (smartExpiryWarning) smartExpiryWarning.style.display = "none";
 
         chatScreen.style.display = "none";
         topNavbar.style.display = "block";
@@ -1385,7 +1453,7 @@
         chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
       }
 
-      // ----- Absolute Lifetime Countdown -------------------------------------
+      // ----- Absolute Lifetime Countdown & Smart Warnings -------------------
 
       function startAbsoluteCountdown(targetExpiresAt) {
         roomExpiresAt = targetExpiresAt;
@@ -1394,24 +1462,157 @@
         function updateTick() {
           var remainingMs = roomExpiresAt - Date.now();
           if (remainingMs <= 0) {
-            clearInterval(countdownInterval);
-            labelCountdown.textContent = "00:00";
-            messageTextInput.disabled = true;
-            btnSendMessage.disabled = true;
-            showBanner("⚠️ Room has expired. All peer connections closed and data wiped.", "error");
-            showToast("Room lifetime reached. Room expired.");
-            cleanupExistingPeer();
+            handleRoomExpiration();
           } else {
             var totalSecs = Math.ceil(remainingMs / 1000);
             var mins = Math.floor(totalSecs / 60);
             var secs = totalSecs % 60;
-            labelCountdown.textContent =
-              (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+            if (labelCountdown) {
+              labelCountdown.textContent =
+                (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+            }
+            updateSmartExpiryWarning(remainingMs);
           }
         }
 
         updateTick();
         countdownInterval = setInterval(updateTick, 1000);
+      }
+
+      function updateSmartExpiryWarning(remainingMs) {
+        if (!smartExpiryWarning) return;
+        if (remainingMs <= 0) {
+          handleRoomExpiration();
+          return;
+        }
+
+        var totalSecs = Math.ceil(remainingMs / 1000);
+        var tier = null;
+        var isUrgent = false;
+        var headline = "Room Expiring Soon";
+        var message = "";
+        var badgeText = "EXPIRING";
+
+        if (remainingMs <= 10000) {
+          tier = "10s";
+          isUrgent = true;
+          badgeText = "FINAL";
+          headline = "Final Countdown";
+          message = "⚠️ Room expires in " + totalSecs + "s!";
+        } else if (remainingMs <= 30000) {
+          tier = "30s";
+          isUrgent = true;
+          badgeText = "URGENT";
+          headline = "30 Seconds Remaining";
+          message = isHost
+            ? "⚠️ Urgent: Room expires in 30 seconds! Finish or extend now."
+            : "⚠️ Urgent: Room expires in 30 seconds!";
+        } else if (remainingMs <= 60000) {
+          tier = "1m";
+          isUrgent = true;
+          badgeText = "EXPIRING";
+          headline = "1 Minute Remaining";
+          message = isHost
+            ? "Your room expires in 1 minute. Finish your conversation or extend the room."
+            : "Your room expires in 1 minute. Finish your conversation before the room self-destructs.";
+        } else if (remainingMs <= 120000) {
+          tier = "2m";
+          isUrgent = false;
+          badgeText = "NOTICE";
+          headline = "2 Minutes Remaining";
+          message = isHost
+            ? "Warning: Room expires in 2 minutes. Prepare to wrap up or extend."
+            : "Warning: Room expires in 2 minutes.";
+        } else if (remainingMs <= 300000) {
+          tier = "5m";
+          isUrgent = false;
+          badgeText = "HEADS-UP";
+          headline = "5 Minutes Remaining";
+          message = "Notice: Room expires in 5 minutes.";
+        }
+
+        if (!tier) {
+          smartExpiryWarning.style.display = "none";
+          lastWarningTier = null;
+          userDismissedTier = null;
+          return;
+        }
+
+        // If user dismissed this exact tier, do not reshow until tier escalates (tier 10s always updates seconds)
+        if (userDismissedTier === tier && tier !== "10s") {
+          return;
+        }
+
+        smartExpiryWarning.className = "smart-expiry-warning tier-" + tier + (isUrgent ? " urgent" : "");
+        if (expiryWarningBadge) expiryWarningBadge.textContent = badgeText;
+        if (expiryWarningHeadline) expiryWarningHeadline.textContent = headline;
+        if (expiryWarningMsg) expiryWarningMsg.textContent = message;
+
+        // Creator-only Extend Room action when extension is supported
+        var maxLifetimeEnd = roomCreatedAt + MAX_TOTAL_ROOM_LIFETIME_MS;
+        var canExtend = isHost && (roomExpiresAt < maxLifetimeEnd);
+        if (btnWarningExtend) {
+          btnWarningExtend.style.display = canExtend ? "inline-flex" : "none";
+        }
+
+        smartExpiryWarning.style.display = "flex";
+
+        if (lastWarningTier !== tier) {
+          lastWarningTier = tier;
+          if (tier === "1m" || tier === "30s" || tier === "10s") {
+            showToast(message);
+          }
+        }
+      }
+
+      function handleRoomExpiration() {
+        if (isRoomExpiredState) return;
+        isRoomExpiredState = true;
+        clearInterval(countdownInterval);
+
+        if (labelCountdown) labelCountdown.textContent = "00:00";
+        if (messageTextInput) messageTextInput.disabled = true;
+        if (btnSendMessage) btnSendMessage.disabled = true;
+        if (btnAttachDocument) btnAttachDocument.disabled = true;
+        if (fileAttachmentInput) fileAttachmentInput.disabled = true;
+
+        if (activeTransfers && activeTransfers.size > 0) {
+          activeTransfers.forEach(function (t, id) {
+            failDocTransfer(id, "Room expired during transfer");
+          });
+          activeTransfers.clear();
+        }
+
+        if (smartExpiryWarning) {
+          smartExpiryWarning.className = "smart-expiry-warning tier-expired urgent";
+          if (expiryWarningBadge) expiryWarningBadge.textContent = "EXPIRED";
+          if (expiryWarningHeadline) expiryWarningHeadline.textContent = "Room Lifetime Expired";
+          if (expiryWarningMsg) expiryWarningMsg.textContent = "All peer connections closed and ephemeral data wiped.";
+          if (btnWarningExtend) btnWarningExtend.style.display = "none";
+          smartExpiryWarning.style.display = "flex";
+        }
+
+        appendSystemMessage("⚠️ Room lifetime reached. All ephemeral data wiped.");
+        showBanner("⚠️ Room has expired. All peer connections closed and data wiped.", "error");
+        showToast("Room lifetime reached. Room expired.");
+
+        if (isHost) {
+          broadcastToGuests({ type: "room_expired" });
+        }
+
+        cleanupExistingPeer();
+      }
+
+      function appendSystemMessage(text) {
+        if (chatEmptyState) {
+          chatEmptyState.style.display = "none";
+        }
+        var bubble = document.createElement("div");
+        bubble.className = "chat-bubble system-bubble";
+        bubble.style.cssText = "align-self: center; background: #27272A; color: #F4F4F1; font-family: var(--font-mono); font-size: 0.75rem; text-align: center; max-width: 90%; border-radius: 2px; padding: 0.5rem 0.875rem; margin: 0.5rem auto; border: 1px solid #3F3F46;";
+        bubble.textContent = text;
+        chatMessagesArea.appendChild(bubble);
+        chatMessagesArea.scrollTop = chatMessagesArea.scrollHeight;
       }
 
       function setCreateButtonLoading(loading) {
@@ -1490,8 +1691,8 @@
       // ----- Message Dispatch ------------------------------------------------
 
       function triggerSendMessage() {
-        if (Date.now() >= roomExpiresAt) {
-          showToast("Room has expired.");
+        if (isRoomExpiredState || Date.now() >= roomExpiresAt) {
+          showToast("Room has expired. Messages cannot be sent.");
           return;
         }
 
@@ -1607,10 +1808,19 @@
       // Document Attachment Event Listeners
       if (btnAttachDocument && fileAttachmentInput) {
         btnAttachDocument.addEventListener("click", function () {
+          if (isRoomExpiredState || Date.now() >= roomExpiresAt) {
+            showToast("Room has expired.");
+            return;
+          }
           fileAttachmentInput.click();
         });
 
         fileAttachmentInput.addEventListener("change", function () {
+          if (isRoomExpiredState || Date.now() >= roomExpiresAt) {
+            showToast("Room has expired.");
+            fileAttachmentInput.value = "";
+            return;
+          }
           if (!fileAttachmentInput.files || fileAttachmentInput.files.length === 0) return;
           var file = fileAttachmentInput.files[0];
 
@@ -1765,6 +1975,67 @@
 
       window.closeMobileMenu = function () {
         mobileMenu.classList.remove("open");
+      };
+
+      // Handle Tab Visibility & Focus for Resilient Expiry Recalculation
+      function checkAndRefreshTick() {
+        if (activeRoomCode && roomExpiresAt) {
+          var remainingMs = roomExpiresAt - Date.now();
+          if (remainingMs <= 0) {
+            handleRoomExpiration();
+          } else {
+            var totalSecs = Math.ceil(remainingMs / 1000);
+            var mins = Math.floor(totalSecs / 60);
+            var secs = totalSecs % 60;
+            if (labelCountdown) {
+              labelCountdown.textContent =
+                (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+            }
+            updateSmartExpiryWarning(remainingMs);
+          }
+        }
+      }
+
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "visible") {
+          checkAndRefreshTick();
+        }
+      });
+
+      window.addEventListener("focus", function () {
+        checkAndRefreshTick();
+      });
+
+      // Automated Testing Hooks for Playwright & Fast Expiry Verification
+      window.__setTestExpiry = function (msFromNow) {
+        roomExpiresAt = Date.now() + msFromNow;
+        isRoomExpiredState = false;
+        lastWarningTier = null;
+        userDismissedTier = null;
+        var remainingMs = msFromNow;
+        if (remainingMs <= 0) {
+          handleRoomExpiration();
+        } else {
+          var totalSecs = Math.ceil(remainingMs / 1000);
+          var mins = Math.floor(totalSecs / 60);
+          var secs = totalSecs % 60;
+          if (labelCountdown) {
+            labelCountdown.textContent =
+              (mins < 10 ? "0" : "") + mins + ":" + (secs < 10 ? "0" : "") + secs;
+          }
+          updateSmartExpiryWarning(remainingMs);
+        }
+        return roomExpiresAt;
+      };
+
+      window.__getRoomExpiryState = function () {
+        return {
+          roomExpiresAt: roomExpiresAt,
+          isHost: isHost,
+          isRoomExpiredState: isRoomExpiredState,
+          lastWarningTier: lastWarningTier,
+          remainingMs: roomExpiresAt - Date.now()
+        };
       };
 
       // Initialization on DOM ready
